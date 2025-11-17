@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "M+JMYJQxF4g=",
+  "success": true,
+  "projectFilePath": "/home/orb/repos/coffee-filter/Backend/Backend.csproj",
+  "expectedPackageFiles": [
+    "/home/orb/.nuget/packages/microsoft.aspnetcore.openapi/9.0.11/microsoft.aspnetcore.openapi.9.0.11.nupkg.sha512",
+    "/home/orb/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
