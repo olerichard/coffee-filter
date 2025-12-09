@@ -1,6 +1,7 @@
 using Api.Database;
+using Api.Features.Brewing;
 
-namespace Api.Features.Brewing
+namespace Api.Database.Entities
 {
   public class Brew : AuditableEntity
   {
