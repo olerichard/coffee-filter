@@ -13,7 +13,8 @@ namespace Api.Features.Brewing.Brews
     public double? OutputWeight { get; init; }
     public int? OutputTasteScore { get; init; }
     public double? OutputAddedWeight { get; init; }
-    public int? OutputAddedTasteScore { get; init; }
+    public int? OutputAddedTasteScore { get; init;
+     }
     public string? Notes { get; init; }
 
     public Brew(BrewEntity brewEntity)
@@ -22,7 +23,7 @@ namespace Api.Features.Brewing.Brews
         throw new ArgumentException("BrewEntity.User must be loaded");
       if (brewEntity.CoffeeBag == null)
         throw new ArgumentException("BrewEntity.CoffeeBag must be loaded");
-        
+      
       Id = brewEntity.Id;
       User = new User(brewEntity.User);
       CoffeeBag = new CoffeeBag(brewEntity.CoffeeBag);

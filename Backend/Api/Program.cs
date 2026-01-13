@@ -1,7 +1,6 @@
 
 using Api.Database;
 using Api.Database.Entities;
-using Api.Features.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +8,7 @@ using Scalar.AspNetCore;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Api.Features.Core.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 

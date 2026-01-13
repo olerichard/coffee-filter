@@ -1,6 +1,5 @@
-namespace Api.Features.Auth
+namespace Api.Features.Core.Auth
 {
-  using Microsoft.AspNetCore.Identity;
   using FluentValidation;
 
   public class LoginRequest

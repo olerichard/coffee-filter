@@ -19,4 +19,5 @@ namespace Api.Database.Entities
     public int? OutputAddedTasteScore {get;set;}
     public string? Notes {get;set;}
   }
+
 }

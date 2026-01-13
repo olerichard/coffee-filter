@@ -2,8 +2,8 @@ namespace Api.Features.Brewing.CoffeeBags
 {
   using Api.Database;
   using Api.Database.Entities;
-  using Api.Features.Auth;
   using Api.Features.Core;
+  using Api.Features.Core.Auth;
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.EntityFrameworkCore;

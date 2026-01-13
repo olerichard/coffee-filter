@@ -13,7 +13,7 @@ namespace Api.Database.Entities
     public string? FlavourNotes {get;set;}
     public DateTime? Opened {get;set;}
     public DateTime? Emptied {get;set;}
-    
+  
     // Navigation property for brews
     public ICollection<BrewEntity> Brews {get;set;} = [];
   }

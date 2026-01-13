@@ -1,4 +1,4 @@
-namespace Api.Features.Auth
+namespace Api.Features.Core.Auth
 {
   using Microsoft.AspNetCore.Http;
   using System.Security.Claims;

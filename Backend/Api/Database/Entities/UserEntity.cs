@@ -1,7 +1,7 @@
 namespace Api.Database.Entities
 {
   using Api.Database;
-  
+
   public class UserEntity : AuditableEntity
   {
     public int Id {get;set;}
@@ -11,9 +11,10 @@ namespace Api.Database.Entities
     public required string PasswordHash {get;set;}
     public bool IsActive {get;set;} = true;
     public DateTime? LastLoginAt {get;set;}
-    
+  
     // Navigation properties
     public ICollection<CoffeeBagEntity> CoffeeBags {get;set;} = [];
     public ICollection<BrewEntity> Brews {get;set;} = [];
+ 
   }
 }

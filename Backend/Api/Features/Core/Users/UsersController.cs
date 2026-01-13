@@ -1,11 +1,10 @@
-namespace Api.Features.Core
+namespace Api.Features.Core.Users
 {
   using Api.Database;
-  using Api.Database.Entities;
-  using Api.Features.Auth;
+  using Api.Features.Core.Auth;
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
-  using Microsoft.EntityFrameworkCore;
+
 
   [ApiController]
   [Route("api/[controller]")]
@@ -47,24 +46,6 @@ namespace Api.Features.Core
       };
 
       return Ok(userDto);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAllUsers()
-    {
-      var users = await _dbContext.Users
-        .Select(u => new UserDto
-        {
-          Id = u.Id,
-          Username = u.Username,
-          Email = u.Email,
-          DisplayName = u.DisplayName,
-          IsActive = u.IsActive,
-          LastLoginAt = u.LastLoginAt
-        })
-        .ToListAsync();
-
-      return Ok(users);
     }
   }
 }

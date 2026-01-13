@@ -1,10 +1,9 @@
-namespace Api.Features.Auth
+namespace Api.Features.Core.Auth
 {
   using Api.Database;
   using Api.Database.Entities;
   using Api.Features.Core;
-  using FluentValidation.AspNetCore;
-  using Microsoft.AspNetCore.Authorization;
+
   using Microsoft.AspNetCore.Identity;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.EntityFrameworkCore;

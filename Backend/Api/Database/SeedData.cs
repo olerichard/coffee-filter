@@ -27,7 +27,7 @@ namespace Api.Database
                 IsActive = true,
                 PasswordHash = passwordHasher.HashPassword(null!, "coffee")
             };
-            
+          
             context.Users.Add(oleUser);
             await context.SaveChangesAsync();
 
@@ -90,9 +90,8 @@ namespace Api.Database
                 new() { UserId = oleUser.Id, CoffeeBagId = 14, BrewType = "AeroPress", CoffeeDose = 16.8, GrindSize = 4.1, OutputTime = 110, OutputWeight = 200.0, OutputTasteScore = 4, Notes = "Smooth, chocolate notes" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 14, BrewType = "Espresso", CoffeeDose = 18.8, GrindSize = 1.9, OutputTime = 27, OutputWeight = 36.0, OutputTasteScore = 4, Notes = "Good balance, orange notes" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 15, BrewType = "V60", CoffeeDose = 17.3, GrindSize = 3.1, OutputTime = 220, OutputWeight = 300.0, OutputTasteScore = 5, Notes = "Exceptional floral notes" },
-                new() { UserId = oleUser.Id, CoffeeBagId = 15, BrewType = "Chemex", CoffeeDose = 21.8, GrindSize = 4.6, OutputTime = 280, OutputWeight = 400.0, OutputTasteScore = 4, Notes = "Very clean, delicate" },
-                new() { UserId = oleUser.Id, CoffeeBagId = 16, BrewType = "French Press", CoffeeDose = 20.8, GrindSize = 5.9, OutputTime = 305, OutputWeight = 350.0, OutputTasteScore = 2, Notes = "Deep, earthy flavors" },
-                new() { UserId = oleUser.Id, CoffeeBagId = 16, BrewType = "Cold Brew", CoffeeDose = 24.5, GrindSize = 7.2, OutputTime = 7300, OutputWeight = 300.0, OutputTasteScore = 3, Notes = "Smooth, rich body" },
+         
+                        new() { UserId = oleUser.Id, CoffeeBagId = 16, BrewType = "Cold Brew", CoffeeDose = 24.5, GrindSize = 7.2, OutputTime = 7300, OutputWeight = 300.0, OutputTasteScore = 3, Notes = "Smooth, rich body" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 17, BrewType = "V60", CoffeeDose = 18.5, GrindSize = 3.7, OutputTime = 250, OutputWeight = 300.0, OutputTasteScore = 3, Notes = "Spicy, chocolate notes" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 17, BrewType = "AeroPress", CoffeeDose = 16.3, GrindSize = 4.3, OutputTime = 125, OutputWeight = 200.0, OutputTasteScore = 4, Notes = "Smooth, well-balanced" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 18, BrewType = "Kalita Wave", CoffeeDose = 16.8, GrindSize = 3.5, OutputTime = 200, OutputWeight = 280.0, OutputTasteScore = 5, Notes = "Bright, complex acidity" },
