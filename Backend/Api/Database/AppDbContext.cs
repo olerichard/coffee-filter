@@ -7,8 +7,43 @@ namespace Api.Database
   {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<User> Users { get; set; } = null!;
     public DbSet<Brew> Brews { get; set; } = null!;
     public DbSet<CoffeeBag> CoffeeBags { get; set; } = null!;
-  
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+      base.OnModelCreating(modelBuilder);
+
+      // Configure User entity
+      modelBuilder.Entity<User>()
+        .HasIndex(u => u.Username)
+        .IsUnique();
+
+      modelBuilder.Entity<User>()
+        .HasIndex(u => u.Email)
+        .IsUnique();
+
+      // Configure User -> CoffeeBag relationship
+      modelBuilder.Entity<CoffeeBag>()
+        .HasOne(cb => cb.User)
+        .WithMany(u => u.CoffeeBags)
+        .HasForeignKey(cb => cb.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+      // Configure User -> Brew relationship
+      modelBuilder.Entity<Brew>()
+        .HasOne(b => b.User)
+        .WithMany(u => u.Brews)
+        .HasForeignKey(b => b.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+      // Maintain existing Brew -> CoffeeBag relationship
+      modelBuilder.Entity<Brew>()
+        .HasOne(b => b.CoffeeBag)
+        .WithMany(cb => cb.Brews)
+        .HasForeignKey(b => b.CoffeeBagId)
+        .OnDelete(DeleteBehavior.Cascade);
+    }
   }
 }
