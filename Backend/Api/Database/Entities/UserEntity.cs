@@ -2,7 +2,7 @@ namespace Api.Database.Entities
 {
   using Api.Database;
   
-  public class User : AuditableEntity
+  public class UserEntity : AuditableEntity
   {
     public int Id {get;set;}
     public required string Username {get;set;}
@@ -13,7 +13,7 @@ namespace Api.Database.Entities
     public DateTime? LastLoginAt {get;set;}
     
     // Navigation properties
-    public ICollection<CoffeeBag> CoffeeBags {get;set;} = [];
-    public ICollection<Brew> Brews {get;set;} = [];
+    public ICollection<CoffeeBagEntity> CoffeeBags {get;set;} = [];
+    public ICollection<BrewEntity> Brews {get;set;} = [];
   }
 }

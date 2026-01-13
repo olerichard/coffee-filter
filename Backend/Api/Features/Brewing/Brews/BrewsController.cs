@@ -29,7 +29,7 @@ namespace Api.Features.Brewing.Brews
     /// </summary>
     /// <returns>An array of user's brews.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Brew>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<BrewEntity>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllBrews()
@@ -55,10 +55,10 @@ namespace Api.Features.Brewing.Brews
     /// <param name="brew">The brew to create.</param>
     /// <returns>The created brew.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(Brew), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateBrew([FromBody] Brew brew)
+    public async Task<IActionResult> CreateBrew([FromBody] BrewEntity brew)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
@@ -89,7 +89,7 @@ namespace Api.Features.Brewing.Brews
     /// <param name="id">The brew ID.</param>
     /// <returns>The brew with the specified ID.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Brew), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -122,11 +122,11 @@ namespace Api.Features.Brewing.Brews
     /// <param name="brew">The updated brew data.</param>
     /// <returns>The updated brew.</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Brew), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateBrew(int id, [FromBody] Brew brew)
+    public async Task<IActionResult> UpdateBrew(int id, [FromBody] BrewEntity brew)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)

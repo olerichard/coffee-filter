@@ -8,7 +8,7 @@ namespace Api.Features.Auth
 
   public interface IJwtService
   {
-    string GenerateToken(User user);
+    string GenerateToken(UserEntity user);
   }
 
   public class JwtService : IJwtService
@@ -20,7 +20,7 @@ namespace Api.Features.Auth
       _configuration = configuration;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(UserEntity user)
     {
       var jwtSettings = _configuration.GetSection("JwtSettings");
       var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");

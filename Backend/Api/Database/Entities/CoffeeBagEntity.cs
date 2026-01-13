@@ -2,11 +2,11 @@ namespace Api.Database.Entities
 {
   using Api.Database;
 
-  public class CoffeeBag : AuditableEntity
+  public class CoffeeBagEntity : AuditableEntity
   {
     public int Id {get;set;}
     public required int UserId {get;set;}
-    public User User {get;set;} = null!;
+    public UserEntity User {get;set;} = null!;
     public required string Roaster {get;set;}
     public required string Origin {get;set;}
     public required string RoastStyle {get;set;}
@@ -15,6 +15,6 @@ namespace Api.Database.Entities
     public DateTime? Emptied {get;set;}
     
     // Navigation property for brews
-    public ICollection<Brew> Brews {get;set;} = [];
+    public ICollection<BrewEntity> Brews {get;set;} = [];
   }
 }

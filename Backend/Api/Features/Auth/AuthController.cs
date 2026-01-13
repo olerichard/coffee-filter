@@ -14,10 +14,10 @@ namespace Api.Features.Auth
   public class AuthController : BaseController
   {
     private readonly AppDbContext _dbContext;
-    private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IPasswordHasher<UserEntity> _passwordHasher;
     private readonly IJwtService _jwtService;
 
-    public AuthController(AppDbContext dbContext, IPasswordHasher<User> passwordHasher, IJwtService jwtService)
+    public AuthController(AppDbContext dbContext, IPasswordHasher<UserEntity> passwordHasher, IJwtService jwtService)
     {
       _dbContext = dbContext;
       _passwordHasher = passwordHasher;

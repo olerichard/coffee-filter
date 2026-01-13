@@ -18,8 +18,8 @@ namespace Api.Database
             }
 
             // Create Ole user first
-            var passwordHasher = new PasswordHasher<User>();
-            var oleUser = new User
+            var passwordHasher = new PasswordHasher<UserEntity>();
+            var oleUser = new UserEntity
             {
                 Username = "ole",
                 Email = "ole@coffee-filter.local",
@@ -32,7 +32,7 @@ namespace Api.Database
             await context.SaveChangesAsync();
 
             // Seed Coffee Bags with Ole as owner
-            var coffeeBags = new List<CoffeeBag>
+            var coffeeBags = new List<CoffeeBagEntity>
             {
                 new() { UserId = oleUser.Id, Roaster = "Blue Bottle Coffee", Origin = "Ethiopia", RoastStyle = "Light", FlavourNotes = "Blueberry, jasmine, bergamot", Opened = DateTime.Now.AddDays(-10) },
                 new() { UserId = oleUser.Id, Roaster = "Stumptown Coffee Roasters", Origin = "Colombia", RoastStyle = "Medium-Light", FlavourNotes = "Chocolate, caramel, citrus", Opened = DateTime.Now.AddDays(-5) },
@@ -59,7 +59,7 @@ namespace Api.Database
             await context.SaveChangesAsync();
 
             // Seed Brew Records
-            var brews = new List<Brew>
+            var brews = new List<BrewEntity>
             {
                 new() { UserId = oleUser.Id, CoffeeBagId = 1, BrewType = "V60", CoffeeDose = 18.0, GrindSize = 3.5, OutputTime = 240, OutputWeight = 300.0, OutputTasteScore = 4, Notes = "Great balance, bright acidity" },
                 new() { UserId = oleUser.Id, CoffeeBagId = 1, BrewType = "AeroPress", CoffeeDose = 16.0, GrindSize = 4.0, OutputTime = 120, OutputWeight = 200.0, OutputTasteScore = 3, Notes = "Smooth, less acidity" },

@@ -29,7 +29,7 @@ namespace Api.Features.Brewing.CoffeeBags
     /// </summary>
     /// <returns>An array of user's coffee bags.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CoffeeBag>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<CoffeeBagEntity>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllCoffeeBags()
@@ -54,7 +54,7 @@ namespace Api.Features.Brewing.CoffeeBags
     /// <param name="id">The coffee bag ID.</param>
     /// <returns>The coffee bag with the specified ID.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(CoffeeBag), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CoffeeBagEntity), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -85,10 +85,10 @@ namespace Api.Features.Brewing.CoffeeBags
     /// <param name="coffeeBag">The coffee bag to create.</param>
     /// <returns>The created coffee bag.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(CoffeeBag), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CoffeeBagEntity), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateCoffeeBag([FromBody] CoffeeBag coffeeBag)
+    public async Task<IActionResult> CreateCoffeeBag([FromBody] CoffeeBagEntity coffeeBag)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
@@ -111,11 +111,11 @@ namespace Api.Features.Brewing.CoffeeBags
     /// <param name="coffeeBag">The updated coffee bag data.</param>
     /// <returns>The updated coffee bag.</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(CoffeeBag), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CoffeeBagEntity), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateCoffeeBag(int id, [FromBody] CoffeeBag coffeeBag)
+    public async Task<IActionResult> UpdateCoffeeBag(int id, [FromBody] CoffeeBagEntity coffeeBag)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
