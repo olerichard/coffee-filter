@@ -9,6 +9,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Api.Features.Core.Auth;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,15 @@ builder.Services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntit
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
+// Configure automatic validation
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = false;
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

@@ -23,7 +23,7 @@ namespace Api.Features.Core.Auth
       _jwtService = jwtService;
     }
 
-    [HttpPost("login")]
+[HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, [FromServices] LoginRequestValidator validator)
     {
       var validationResult = await validator.ValidateAsync(request);
@@ -32,32 +32,32 @@ namespace Api.Features.Core.Auth
         return BadRequest(validationResult.Errors);
       }
 
-      var user = await _dbContext.Users
+      var userEntity = await _dbContext.Users
         .FirstOrDefaultAsync(u => u.Username == request.Username);
 
-      if (user == null)
+      if (userEntity == null)
       {
         return Unauthorized("Invalid username or password");
       }
 
-      var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+      var result = _passwordHasher.VerifyHashedPassword(userEntity, userEntity.PasswordHash, request.Password);
       if ( result != PasswordVerificationResult.Success )
       {
         return Unauthorized("Invalid username or password");
       }
 
       // Update last login time
-      user.LastLoginAt = DateTime.UtcNow;
+      userEntity.LastLoginAt = DateTime.UtcNow;
       await _dbContext.SaveChangesAsync();
 
-      var token = _jwtService.GenerateToken(user);
+      var token = _jwtService.GenerateToken(userEntity);
 
       var response = new LoginResponse
       {
         Token = token,
-        Username = user.Username,
-        Email = user.Email,
-        DisplayName = user.DisplayName
+        Username = userEntity.Username,
+        Email = userEntity.Email,
+        DisplayName = userEntity.DisplayName
       };
 
       return Ok(response);
