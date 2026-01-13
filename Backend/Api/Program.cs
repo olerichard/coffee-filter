@@ -1,6 +1,7 @@
 
 using Api.Database;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using System.Runtime.InteropServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
@@ -39,6 +41,7 @@ using (var scope = app.Services.CreateScope())
     await context.Database.MigrateAsync();
     
     // Apply seed data
+    await SeedData.InitializeAsync(context);
     
 }
 

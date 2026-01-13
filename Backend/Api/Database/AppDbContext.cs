@@ -1,5 +1,4 @@
 using Api.Database.Entities;
-using Api.Features.Brewing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Database
