@@ -27,7 +27,13 @@ namespace Api.Features.Core.Auth
       var issuer = jwtSettings["Issuer"] ?? "CoffeeFilter";
       var audience = jwtSettings["Audience"] ?? "CoffeeFilterUsers";
 
-      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+      var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
+      var keyFingerprint = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(secretKeyBytes));
+      Console.WriteLine($"JWT signing key fingerprint (SHA256): {keyFingerprint}");
+      Console.WriteLine($"JWT issuer: {issuer}");
+      Console.WriteLine($"JWT audience: {audience}");
+
+      var key = new SymmetricSecurityKey(secretKeyBytes);
       var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
       var claims = new[]

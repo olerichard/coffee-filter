@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Api.Features.Core.Auth;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,14 +28,67 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
+        var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
+
+        options.IncludeErrorDetails = true;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
             ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured")))
+            IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtBearer");
+
+                var keyFingerprint = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(secretKeyBytes));
+
+                logger.LogError(context.Exception,
+                    "JWT authentication failed. Scheme={Scheme}. KeyFingerprint(SHA256)={KeyFingerprint}. AuthorizationHeader={AuthorizationHeader}",
+                    context.Scheme.Name,
+                    keyFingerprint,
+                    context.Request.Headers.Authorization.ToString());
+
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtBearer");
+
+                logger.LogWarning(
+                    "JWT challenge. Error={Error}. ErrorDescription={ErrorDescription}. AuthorizationHeader={AuthorizationHeader}",
+                    context.Error,
+                    context.ErrorDescription,
+                    context.Request.Headers.Authorization.ToString());
+
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("JwtBearer");
+
+                logger.LogInformation(
+                    "JWT token validated. Subject={Subject}. Name={Name}",
+                    context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value,
+                    context.Principal?.FindFirst(JwtRegisteredClaimNames.Name)?.Value);
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -54,7 +109,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<Api.OpenApi.BearerSecuritySchemeTransformer>();
+});
 
 var app = builder.Build();
 
@@ -67,6 +125,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Create database directory with proper permissions and apply migrations
