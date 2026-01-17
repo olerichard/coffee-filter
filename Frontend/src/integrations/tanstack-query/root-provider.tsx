@@ -7,7 +7,7 @@ export function getContext() {
   }
 }
 
-export function Provider({
+export function QueryProvider({
   children,
   queryClient,
 }: {
