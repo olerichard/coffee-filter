@@ -11,6 +11,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
+import { Authorization } from '@/components/authorization/authorization'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -47,7 +48,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <Authorization>{children}</Authorization>
         <TanStackDevtools
           config={{
             position: 'bottom-right',

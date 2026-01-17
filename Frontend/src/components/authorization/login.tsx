@@ -3,28 +3,17 @@ import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useMutation } from '@tanstack/react-query'
-import {
-  createRoute,
-  Link,
-  useNavigate,
-  createFileRoute,
-} from '@tanstack/react-router'
+
 import { useState } from 'react'
 
-const Login = () => {
+export const Login = () => {
   const [state, setState] = useState({ username: 'ole', password: 'coffee' })
 
-  const navigate = useNavigate()
   const auth = useAuth()
 
   const login = useMutation({
     mutationFn: auth.login,
-    onSuccess: () => {
-      navigate({ to: '/', replace: true })
-    },
   })
-
-  if (auth.isAuthenticated) return <Link to="/"></Link>
 
   return (
     <div>
@@ -53,5 +42,3 @@ const Login = () => {
     </div>
   )
 }
-
-export const Route = createFileRoute('/login')({ component: Login })
