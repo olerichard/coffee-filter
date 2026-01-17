@@ -3,6 +3,7 @@ import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
+import { AuthenticationProvider } from './components/context/authentication/AuthenticationContext'
 
 // Create a new router instance
 export const getRouter = () => {
@@ -15,7 +16,7 @@ export const getRouter = () => {
     Wrap: (props: { children: React.ReactNode }) => {
       return (
         <TanstackQuery.QueryProvider {...rqContext}>
-          {props.children}
+          <AuthenticationProvider>{props.children}</AuthenticationProvider>
         </TanstackQuery.QueryProvider>
       )
     },
