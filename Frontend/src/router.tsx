@@ -1,13 +1,11 @@
-import { createRouter } from '@tanstack/react-router'
-import * as TanstackQuery from './integrations/tanstack-query/root-provider'
+import { createRouter } from '@tanstack/react-router';
+import * as Query from './integrations/tanstack-query/root-provider';
 
-// Import the generated route tree
-import { routeTree } from './routeTree.gen'
-import { AuthenticationProvider } from './components/context/authentication/AuthenticationContext'
+import { routeTree } from './routeTree.gen';
+import { AuthenticationProvider } from './components/context/authentication/AuthenticationContext';
 
-// Create a new router instance
 export const getRouter = () => {
-  const rqContext = TanstackQuery.getContext()
+  const rqContext = Query.getContext();
 
   const router = createRouter({
     routeTree,
@@ -15,12 +13,12 @@ export const getRouter = () => {
     defaultPreload: 'intent',
     Wrap: (props: { children: React.ReactNode }) => {
       return (
-        <TanstackQuery.QueryProvider {...rqContext}>
+        <Query.QueryProvider {...rqContext}>
           <AuthenticationProvider>{props.children}</AuthenticationProvider>
-        </TanstackQuery.QueryProvider>
-      )
+        </Query.QueryProvider>
+      );
     },
-  })
+  });
 
-  return router
-}
+  return router;
+};
