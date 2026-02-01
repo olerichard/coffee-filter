@@ -12,11 +12,11 @@ namespace Api.Database.Entities
     public required string BrewType {get;set;}
     public double? CoffeeDose {get;set;}
     public double? GrindSize {get;set;}
-    public int? OutputTime {get;set;}
-    public double? OutputWeight {get;set;}
-    public int? OutputTasteScore {get;set;}
-    public double? OutputAddedWeight {get;set;}
-    public int? OutputAddedTasteScore {get;set;}
+    public int? BrewTime {get;set;}
+    public double? BrewWeight {get;set;}
+    public int? BrewTasteScore {get;set;}
+    public double? BrewAddedWeight {get;set;}
+    public int? BrewAddedWeightTasteScore {get;set;}
     public string? Notes {get;set;}
   }
 

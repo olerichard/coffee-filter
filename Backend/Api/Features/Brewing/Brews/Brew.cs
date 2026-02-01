@@ -30,11 +30,11 @@ namespace Api.Features.Brewing.Brews
       BrewType = brewEntity.BrewType;
       CoffeeDose = brewEntity.CoffeeDose;
       GrindSize = brewEntity.GrindSize;
-      OutputTime = brewEntity.OutputTime;
-      OutputWeight = brewEntity.OutputWeight;
-      OutputTasteScore = brewEntity.OutputTasteScore;
-      OutputAddedWeight = brewEntity.OutputAddedWeight;
-      OutputAddedTasteScore = brewEntity.OutputAddedTasteScore;
+      OutputTime = brewEntity.BrewTime;
+      OutputWeight = brewEntity.BrewWeight;
+      OutputTasteScore = brewEntity.BrewTasteScore;
+      OutputAddedWeight = brewEntity.BrewAddedWeight;
+      OutputAddedTasteScore = brewEntity.BrewAddedWeightTasteScore;
       Notes = brewEntity.Notes;
     }
   }

@@ -158,11 +158,11 @@ namespace Api.Features.Brewing.Brews
       existingBrew.BrewType = brew.BrewType;
       existingBrew.CoffeeDose = brew.CoffeeDose;
       existingBrew.GrindSize = brew.GrindSize;
-      existingBrew.OutputTime = brew.OutputTime;
-      existingBrew.OutputWeight = brew.OutputWeight;
-      existingBrew.OutputTasteScore = brew.OutputTasteScore;
-      existingBrew.OutputAddedWeight = brew.OutputAddedWeight;
-      existingBrew.OutputAddedTasteScore = brew.OutputAddedTasteScore;
+      existingBrew.BrewTime = brew.BrewTime;
+      existingBrew.BrewWeight = brew.BrewWeight;
+      existingBrew.BrewTasteScore = brew.BrewTasteScore;
+      existingBrew.BrewAddedWeight = brew.BrewAddedWeight;
+      existingBrew.BrewAddedWeightTasteScore = brew.BrewAddedWeightTasteScore;
       existingBrew.Notes = brew.Notes;
       existingBrew.CoffeeBagId = brew.CoffeeBagId;
 
