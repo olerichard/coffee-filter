@@ -12,6 +12,7 @@ import appCss from '../styles.css?url';
 
 import type { QueryClient } from '@tanstack/react-query';
 import { Authorization } from '@/components/authorization/authorization';
+import { ThemeProvider } from '@/components/context/themeContext/ThemeProvider';
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -48,9 +49,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Authorization>{children}</Authorization>
+        <ThemeProvider>
+          <Authorization>{children}</Authorization>
+        </ThemeProvider>
         <TanStackDevtools
           config={{
+            defaultOpen: false,
             position: 'bottom-right',
           }}
           plugins={[
