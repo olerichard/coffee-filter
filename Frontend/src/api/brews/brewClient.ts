@@ -1,8 +1,5 @@
-import z from 'zod';
 import { apiClient } from '../base/apiClient';
-import { BrewRequestSchema } from './brewRequestSchemas';
-
-type Brew = z.infer<typeof BrewRequestSchema>;
+import { Brew, BrewRequestSchema } from './brewRequestSchemas';
 
 class BrewClient {
   getUrl(...args: string[]) {

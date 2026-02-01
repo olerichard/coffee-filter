@@ -1,6 +1,7 @@
+using Api.Database.Entities;
+
 namespace Api.Features.Brewing.Brews
 {
-  using Api.Database.Entities;
   public class Brew
   {
     public int Id { get; init; }
@@ -9,12 +10,11 @@ namespace Api.Features.Brewing.Brews
     public string BrewType { get; init; }
     public double? CoffeeDose { get; init; }
     public double? GrindSize { get; init; }
-    public int? OutputTime { get; init; }
-    public double? OutputWeight { get; init; }
-    public int? OutputTasteScore { get; init; }
-    public double? OutputAddedWeight { get; init; }
-    public int? OutputAddedTasteScore { get; init;
-     }
+    public int? BrewTime { get; init; }
+    public double? BrewWeight { get; init; }
+    public int? BrewTasteScore { get; init; }
+    public double? BrewAddedWeight { get; init; }
+    public int? BrewAddedTasteScore { get; init;}
     public string? Notes { get; init; }
 
     public Brew(BrewEntity brewEntity)
@@ -30,11 +30,11 @@ namespace Api.Features.Brewing.Brews
       BrewType = brewEntity.BrewType;
       CoffeeDose = brewEntity.CoffeeDose;
       GrindSize = brewEntity.GrindSize;
-      OutputTime = brewEntity.BrewTime;
-      OutputWeight = brewEntity.BrewWeight;
-      OutputTasteScore = brewEntity.BrewTasteScore;
-      OutputAddedWeight = brewEntity.BrewAddedWeight;
-      OutputAddedTasteScore = brewEntity.BrewAddedWeightTasteScore;
+      BrewTime = brewEntity.BrewTime;
+      BrewWeight = brewEntity.BrewWeight;
+      BrewTasteScore = brewEntity.BrewTasteScore;
+      BrewAddedWeight = brewEntity.BrewAddedWeight;
+      BrewAddedTasteScore = brewEntity.BrewAddedWeightTasteScore;
       Notes = brewEntity.Notes;
     }
   }
