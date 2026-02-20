@@ -4,6 +4,7 @@ namespace Api.Features.Brewing.Brews
   using Api.Database.Entities;
   using Api.Features.Core;
   using Api.Features.Core.Auth;
+  using Api.Features.Brewing.Brews.Dtos;
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ namespace Api.Features.Brewing.Brews
     /// </summary>
     /// <returns>An array of user's brews.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<BrewEntity>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<BrewDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllBrews()
@@ -46,7 +47,34 @@ namespace Api.Features.Brewing.Brews
         .Include(b => b.User)
         .ToListAsync();
 
-      return Ok(brews);
+      var brewDtos = brews.Select(b => new BrewDto
+      {
+        Id = b.Id,
+        CoffeeBagId = b.CoffeeBagId,
+        CoffeeBag = new CoffeeBagDto
+        {
+          Id = b.CoffeeBag.Id,
+          UserId = b.CoffeeBag.UserId,
+          Roaster = b.CoffeeBag.Roaster,
+          Origin = b.CoffeeBag.Origin,
+          RoastStyle = b.CoffeeBag.RoastStyle,
+          FlavourNotes = b.CoffeeBag.FlavourNotes,
+          Opened = b.CoffeeBag.Opened,
+          Emptied = b.CoffeeBag.Emptied,
+        },
+        BrewType = b.BrewType ?? "",
+        CoffeeDose = b.CoffeeDose ?? 0,
+        GrindSize = b.GrindSize ?? 0,
+        BrewTime = b.BrewTime ?? 0,
+        BrewWeight = b.BrewWeight ?? 0,
+        BrewTasteScore = b.BrewTasteScore ?? 0,
+        BrewAddedWeight = b.BrewAddedWeight ?? 0,
+        BrewAddedTasteScore = b.BrewAddedWeightTasteScore ?? 0,
+        Notes = b.Notes,
+        BrewedOn = b.CreatedOn ?? DateTime.UtcNow,
+      }).ToList();
+
+      return Ok(brewDtos);
     }
 
     /// <summary>
@@ -89,7 +117,7 @@ namespace Api.Features.Brewing.Brews
     /// <param name="id">The brew ID.</param>
     /// <returns>The brew with the specified ID.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BrewDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -112,7 +140,34 @@ namespace Api.Features.Brewing.Brews
         return NotFound();
       }
 
-      return Ok(brew);
+      var brewDto = new BrewDto
+      {
+        Id = brew.Id,
+        CoffeeBagId = brew.CoffeeBagId,
+        CoffeeBag = new CoffeeBagDto
+        {
+          Id = brew.CoffeeBag.Id,
+          UserId = brew.CoffeeBag.UserId,
+          Roaster = brew.CoffeeBag.Roaster,
+          Origin = brew.CoffeeBag.Origin,
+          RoastStyle = brew.CoffeeBag.RoastStyle,
+          FlavourNotes = brew.CoffeeBag.FlavourNotes,
+          Opened = brew.CoffeeBag.Opened,
+          Emptied = brew.CoffeeBag.Emptied,
+        },
+        BrewType = brew.BrewType ?? "",
+        CoffeeDose = brew.CoffeeDose ?? 0,
+        GrindSize = brew.GrindSize ?? 0,
+        BrewTime = brew.BrewTime ?? 0,
+        BrewWeight = brew.BrewWeight ?? 0,
+        BrewTasteScore = brew.BrewTasteScore ?? 0,
+        BrewAddedWeight = brew.BrewAddedWeight ?? 0,
+        BrewAddedTasteScore = brew.BrewAddedWeightTasteScore ?? 0,
+        Notes = brew.Notes,
+        BrewedOn = brew.CreatedOn ?? DateTime.UtcNow,
+      };
+
+      return Ok(brewDto);
     }
 
     /// <summary>

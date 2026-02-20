@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export const CoffeeBagRequestSchema = z.object({
-  id: z.guid(),
+  id: z.number(),
   userId: z.number(),
   roaster: z.string(),
   origin: z.string(),
@@ -13,8 +13,6 @@ export const CoffeeBagRequestSchema = z.object({
 
 export const BrewRequestSchema = z.object({
   id: z.number(),
-  userId: z.number(),
-  user: z.object(),
   coffeeBagId: z.number(),
   coffeeBag: CoffeeBagRequestSchema,
   brewType: z.string(),
