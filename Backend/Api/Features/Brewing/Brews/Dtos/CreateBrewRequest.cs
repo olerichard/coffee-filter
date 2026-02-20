@@ -1,6 +1,9 @@
 namespace Api.Features.Brewing.Brews.Dtos
 {
+  using Api.Database;
+  using Api.Features.Core.Auth;
   using FluentValidation;
+  using Microsoft.EntityFrameworkCore;
 
   public class CreateBrewRequest
   {
@@ -18,11 +21,19 @@ namespace Api.Features.Brewing.Brews.Dtos
 
   public class CreateBrewRequestValidator : AbstractValidator<CreateBrewRequest>
   {
-    public CreateBrewRequestValidator()
+    private readonly AppDbContext _dbContext;
+    private readonly ICurrentUserService _currentUserService;
+
+    public CreateBrewRequestValidator(
+        AppDbContext dbContext,
+        ICurrentUserService currentUserService)
     {
+      _dbContext = dbContext;
+      _currentUserService = currentUserService;
+
       RuleFor(x => x.CoffeeBagId)
-        .GreaterThan(0)
-        .WithMessage("CoffeeBagId must be greater than 0");
+        .MustAsync(CoffeeBagExistsAndOwnedByUser)
+        .WithMessage("CoffeeBag not found or access denied");
 
       RuleFor(x => x.BrewType)
         .NotEmpty()
@@ -65,6 +76,16 @@ namespace Api.Features.Brewing.Brews.Dtos
         .MaximumLength(1000)
         .When(x => x.Notes != null)
         .WithMessage("Notes must not exceed 1000 characters");
+    }
+
+    private async Task<bool> CoffeeBagExistsAndOwnedByUser(int coffeeBagId, CancellationToken cancellationToken)
+    {
+      var userId = _currentUserService.GetCurrentUserId();
+      if (!userId.HasValue)
+        return false;
+
+      return await _dbContext.CoffeeBags
+        .AnyAsync(cb => cb.Id == coffeeBagId && cb.UserId == userId.Value, cancellationToken);
     }
   }
 }

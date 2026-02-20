@@ -72,7 +72,7 @@ namespace Api.Features.Brewing.Brews
         BrewAddedTasteScore = b.BrewAddedWeightTasteScore ?? 0,
         Notes = b.Notes,
         BrewedOn = b.CreatedOn ?? DateTime.UtcNow,
-      }).ToList();
+      }).OrderByDescending(b => b.BrewedOn) .ToList();
 
       return Ok(brewDtos);
     }
@@ -101,15 +101,6 @@ namespace Api.Features.Brewing.Brews
       if (!userId.HasValue)
       {
         return Unauthorized();
-      }
-
-      // Ensure the coffee bag belongs to the current user
-      var coffeeBag = await _dbContext.CoffeeBags
-        .FirstOrDefaultAsync(cb => cb.Id == request.CoffeeBagId && cb.UserId == userId.Value);
-
-      if (coffeeBag == null)
-      {
-        return BadRequest("Invalid CoffeeBag ID or access denied");
       }
 
       var brew = new BrewEntity
