@@ -26,6 +26,41 @@ class BrewClient {
 
     return res;
   }
+
+  async createBrew(data: {
+    coffeeBagId: number;
+    brewType: string;
+    brewTasteScore: number;
+    coffeeDose: number;
+    grindSize: number;
+    brewTime: number;
+    brewWeight?: number;
+    brewAddedWeight?: number;
+    brewAddedWeightTasteScore?: number;
+    notes?: string;
+  }) {
+    const brewData = {
+      coffeeBagId: data.coffeeBagId,
+      brewType: data.brewType,
+      brewTasteScore: data.brewTasteScore,
+      coffeeDose: data.coffeeDose,
+      grindSize: data.grindSize,
+      brewTime: data.brewTime,
+      brewWeight: data.brewWeight || null,
+      brewAddedWeight: data.brewAddedWeight || null,
+      brewAddedWeightTasteScore: data.brewAddedWeightTasteScore || null,
+      notes: data.notes || null,
+    };
+
+    const res = await apiClient.fetch<Brew>(
+      'POST',
+      this.getUrl(),
+      brewData,
+      null,
+    );
+
+    return res;
+  }
 }
 
 export const brewClient = new BrewClient();

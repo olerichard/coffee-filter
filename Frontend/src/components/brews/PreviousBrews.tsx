@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-
-import { brewClient } from '@/api/brews/brewClient';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { Card, CardContent } from '@/components/ui/card';
+import { apiClients } from '@/api/apiClients';
 
 export function PreviousBrews() {
   const query = useQuery({
     queryKey: ['brews'],
-    queryFn: () => brewClient.getBrews(),
+    queryFn: () => apiClients.brew.getBrews(),
   });
 
   if (query.isLoading) {

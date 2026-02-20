@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-
-import { apiClient } from '@/api/base/apiClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiClients } from '@/api/apiClients';
 
 const BREW_TYPES = [
   'Espresso',
@@ -25,16 +24,6 @@ const BREW_TYPES = [
   'Drip',
   'Siphon',
 ] as const;
-
-interface CoffeeBag {
-  id: number;
-  roaster: string;
-  origin: string;
-  roastStyle: string;
-  flavourNotes: string;
-  opened: string | null;
-  emptied: string | null;
-}
 
 interface BrewFormData {
   coffeeBagId: number;
@@ -66,40 +55,11 @@ function NewBrewPage() {
 
   const coffeeBagsQuery = useQuery({
     queryKey: ['coffeeBags'],
-    queryFn: async () => {
-      const res = await apiClient.fetch<Array<CoffeeBag>>(
-        'GET',
-        'http://127.0.0.1:5186/api/CoffeeBags',
-        null,
-        null,
-      );
-      return res;
-    },
+    queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
   });
 
   const createBrewMutation = useMutation({
-    mutationFn: async (data: BrewFormData) => {
-      const brewData = {
-        coffeeBagId: data.coffeeBagId,
-        brewType: data.brewType,
-        brewTasteScore: data.brewTasteScore,
-        coffeeDose: data.coffeeDose,
-        grindSize: data.grindSize,
-        brewTime: data.brewTime,
-        brewWeight: data.brewWeight || null,
-        brewAddedWeight: data.brewAddedWeight || null,
-        brewAddedWeightTasteScore: data.brewAddedWeightTasteScore || null,
-        notes: data.notes || null,
-      };
-
-      const res = await apiClient.fetch(
-        'POST',
-        'http://127.0.0.1:5186/api/Brews',
-        brewData,
-        null,
-      );
-      return res;
-    },
+    mutationFn: (data: BrewFormData) => apiClients.brew.createBrew(data),
     onSuccess: () => {
       navigate({ to: '/' });
     },
