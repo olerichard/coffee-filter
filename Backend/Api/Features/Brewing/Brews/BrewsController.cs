@@ -80,14 +80,23 @@ namespace Api.Features.Brewing.Brews
     /// <summary>
     /// Create a new Brew for current user.
     /// </summary>
-    /// <param name="brew">The brew to create.</param>
+    /// <param name="request">The brew to create.</param>
+    /// <param name="validator">The validator for the request.</param>
     /// <returns>The created brew.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateBrew([FromBody] BrewEntity brew)
+    public async Task<IActionResult> CreateBrew(
+        [FromBody] CreateBrewRequest request,
+        [FromServices] CreateBrewRequestValidator validator)
     {
+      var validationResult = await validator.ValidateAsync(request);
+      if (!validationResult.IsValid)
+      {
+        return BadRequest(validationResult.Errors);
+      }
+
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
       {
@@ -96,14 +105,27 @@ namespace Api.Features.Brewing.Brews
 
       // Ensure the coffee bag belongs to the current user
       var coffeeBag = await _dbContext.CoffeeBags
-        .FirstOrDefaultAsync(cb => cb.Id == brew.CoffeeBagId && cb.UserId == userId.Value);
+        .FirstOrDefaultAsync(cb => cb.Id == request.CoffeeBagId && cb.UserId == userId.Value);
 
       if (coffeeBag == null)
       {
         return BadRequest("Invalid CoffeeBag ID or access denied");
       }
 
-      brew.UserId = userId.Value;
+      var brew = new BrewEntity
+      {
+        UserId = userId.Value,
+        CoffeeBagId = request.CoffeeBagId,
+        BrewType = request.BrewType,
+        CoffeeDose = request.CoffeeDose,
+        GrindSize = request.GrindSize,
+        BrewTime = request.BrewTime,
+        BrewWeight = request.BrewWeight,
+        BrewTasteScore = request.BrewTasteScore,
+        BrewAddedWeight = request.BrewAddedWeight,
+        BrewAddedWeightTasteScore = request.BrewAddedWeightTasteScore,
+        Notes = request.Notes,
+      };
 
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();

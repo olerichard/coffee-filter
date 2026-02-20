@@ -28,6 +28,26 @@
 - Namespaces: `Api.FeatureArea.EntityName`
 - No XML comments (1591 warnings suppressed)
 
+### Validation
+- Use FluentValidation for all request validation
+- Always perform manual validation in controllers (not automatic validation)
+- Inject the validator as `[FromServices]` and call `validator.ValidateAsync(request)`
+- Return `BadRequest(validationResult.Errors)` if validation fails
+- Example pattern (from AuthController/Login):
+  ```csharp
+  public async Task<IActionResult> Login(
+      [FromBody] LoginRequest request, 
+      [FromServices] LoginRequestValidator validator)
+  {
+      var validationResult = await validator.ValidateAsync(request);
+      if (!validationResult.IsValid)
+      {
+          return BadRequest(validationResult.Errors);
+      }
+      // ... rest of method
+  }
+  ```
+
 ### TypeScript (Frontend)
 - Strict mode enabled
 - Single quotes, no semicolons, trailing commas

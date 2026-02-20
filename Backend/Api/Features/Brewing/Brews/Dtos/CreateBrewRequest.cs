@@ -1,0 +1,70 @@
+namespace Api.Features.Brewing.Brews.Dtos
+{
+  using FluentValidation;
+
+  public class CreateBrewRequest
+  {
+    public int CoffeeBagId { get; set; }
+    public required string BrewType { get; set; }
+    public int BrewTasteScore { get; set; }
+    public double CoffeeDose { get; set; }
+    public double GrindSize { get; set; }
+    public int BrewTime { get; set; }
+    public double? BrewWeight { get; set; }
+    public double? BrewAddedWeight { get; set; }
+    public int? BrewAddedWeightTasteScore { get; set; }
+    public string? Notes { get; set; }
+  }
+
+  public class CreateBrewRequestValidator : AbstractValidator<CreateBrewRequest>
+  {
+    public CreateBrewRequestValidator()
+    {
+      RuleFor(x => x.CoffeeBagId)
+        .GreaterThan(0)
+        .WithMessage("CoffeeBagId must be greater than 0");
+
+      RuleFor(x => x.BrewType)
+        .NotEmpty()
+        .WithMessage("BrewType is required")
+        .MaximumLength(50)
+        .WithMessage("BrewType must not exceed 50 characters");
+
+      RuleFor(x => x.BrewTasteScore)
+        .InclusiveBetween(1, 10)
+        .WithMessage("BrewTasteScore must be between 1 and 10");
+
+      RuleFor(x => x.CoffeeDose)
+        .GreaterThan(0)
+        .WithMessage("CoffeeDose must be greater than 0");
+
+      RuleFor(x => x.GrindSize)
+        .GreaterThan(0)
+        .WithMessage("GrindSize must be greater than 0");
+
+      RuleFor(x => x.BrewTime)
+        .GreaterThan(0)
+        .WithMessage("BrewTime must be greater than 0");
+
+      RuleFor(x => x.BrewWeight)
+        .GreaterThan(0)
+        .When(x => x.BrewWeight.HasValue)
+        .WithMessage("BrewWeight must be greater than 0");
+
+      RuleFor(x => x.BrewAddedWeight)
+        .GreaterThan(0)
+        .When(x => x.BrewAddedWeight.HasValue)
+        .WithMessage("BrewAddedWeight must be greater than 0");
+
+      RuleFor(x => x.BrewAddedWeightTasteScore)
+        .InclusiveBetween(1, 10)
+        .When(x => x.BrewAddedWeightTasteScore.HasValue)
+        .WithMessage("BrewAddedWeightTasteScore must be between 1 and 10");
+
+      RuleFor(x => x.Notes)
+        .MaximumLength(1000)
+        .When(x => x.Notes != null)
+        .WithMessage("Notes must not exceed 1000 characters");
+    }
+  }
+}
