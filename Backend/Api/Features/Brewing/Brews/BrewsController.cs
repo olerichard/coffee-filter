@@ -2,9 +2,11 @@ namespace Api.Features.Brewing.Brews
 {
   using Api.Database;
   using Api.Database.Entities;
+  using Api.Features.Brewing.Brews.DTOs;
+  using Api.Features.Brewing.DTOs;
   using Api.Features.Core;
   using Api.Features.Core.Auth;
-  using Api.Features.Brewing.Brews.Dtos;
+
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.EntityFrameworkCore;
@@ -30,7 +32,7 @@ namespace Api.Features.Brewing.Brews
     /// </summary>
     /// <returns>An array of user's brews.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<BrewDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<BrewResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllBrews()
@@ -47,11 +49,11 @@ namespace Api.Features.Brewing.Brews
         .Include(b => b.User)
         .ToListAsync();
 
-      var brewDtos = brews.Select(b => new BrewDto
+      var brewDtos = brews.Select(b => new BrewResponse
       {
         Id = b.Id,
         CoffeeBagId = b.CoffeeBagId,
-        CoffeeBag = new CoffeeBagDto
+        CoffeeBag = new CoffeeBagResponse
         {
           Id = b.CoffeeBag.Id,
           UserId = b.CoffeeBag.UserId,
@@ -130,7 +132,7 @@ namespace Api.Features.Brewing.Brews
     /// <param name="id">The brew ID.</param>
     /// <returns>The brew with the specified ID.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(BrewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BrewResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -153,11 +155,11 @@ namespace Api.Features.Brewing.Brews
         return NotFound();
       }
 
-      var brewDto = new BrewDto
+      var brewDto = new BrewResponse
       {
         Id = brew.Id,
         CoffeeBagId = brew.CoffeeBagId,
-        CoffeeBag = new CoffeeBagDto
+        CoffeeBag = new CoffeeBagResponse
         {
           Id = brew.CoffeeBag.Id,
           UserId = brew.CoffeeBag.UserId,

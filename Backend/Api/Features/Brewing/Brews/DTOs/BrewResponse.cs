@@ -1,6 +1,6 @@
-namespace Api.Features.Brewing.Brews.Dtos;
+namespace Api.Features.Brewing.DTOs;
 
-public class CoffeeBagDto
+public class CoffeeBagResponse
 {
   public int Id { get; set; }
   public int UserId { get; set; }
@@ -12,11 +12,11 @@ public class CoffeeBagDto
   public DateTime? Emptied { get; set; }
 }
 
-public class BrewDto
+public class BrewResponse
 {
   public int Id { get; set; }
   public int CoffeeBagId { get; set; }
-  public CoffeeBagDto CoffeeBag { get; set; } = null!;
+  public CoffeeBagResponse CoffeeBag { get; set; } = null!;
   public string BrewType { get; set; } = "";
   public double CoffeeDose { get; set; }
   public double GrindSize { get; set; }

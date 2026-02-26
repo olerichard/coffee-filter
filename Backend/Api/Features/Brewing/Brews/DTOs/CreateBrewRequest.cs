@@ -1,4 +1,4 @@
-namespace Api.Features.Brewing.Brews.Dtos
+namespace Api.Features.Brewing.Brews.DTOs
 {
   using Api.Database;
   using Api.Features.Core.Auth;

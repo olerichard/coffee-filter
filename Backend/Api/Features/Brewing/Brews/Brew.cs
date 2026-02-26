@@ -1,4 +1,5 @@
 using Api.Database.Entities;
+using Api.Features.Brewing.CoffeeBags;
 
 namespace Api.Features.Brewing.Brews
 {
