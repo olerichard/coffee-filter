@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScoreSelector } from '@/components/brews/ScoreSelector';
 import { apiClients } from '@/api/apiClients';
 
 const BREW_TYPES = [
@@ -132,20 +133,14 @@ function NewBrewPage() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="brewTasteScore">Taste Score (1-10) *</Label>
-              <Input
-                id="brewTasteScore"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.brewTasteScore || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    brewTasteScore: parseInt(e.target.value) || 0,
-                  })
+            <div className="flex flex-col gap-2 ">
+              <Label htmlFor="brewTasteScore">Taste Score *</Label>
+              <ScoreSelector
+                value={formData.brewTasteScore}
+                onChange={(value) =>
+                  setFormData({ ...formData, brewTasteScore: value })
                 }
+                max={10}
               />
             </div>
 
