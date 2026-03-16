@@ -14,8 +14,6 @@ namespace Api.Features.Brewing.Brews
     public int? BrewTime { get; init; }
     public double? BrewWeight { get; init; }
     public int? BrewTasteScore { get; init; }
-    public double? BrewAddedWeight { get; init; }
-    public int? BrewAddedTasteScore { get; init;}
     public string? Notes { get; init; }
 
     public Brew(BrewEntity brewEntity)
@@ -34,8 +32,6 @@ namespace Api.Features.Brewing.Brews
       BrewTime = brewEntity.BrewTime;
       BrewWeight = brewEntity.BrewWeight;
       BrewTasteScore = brewEntity.BrewTasteScore;
-      BrewAddedWeight = brewEntity.BrewAddedWeight;
-      BrewAddedTasteScore = brewEntity.BrewAddedWeightTasteScore;
       Notes = brewEntity.Notes;
     }
   }

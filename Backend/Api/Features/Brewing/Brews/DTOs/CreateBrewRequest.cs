@@ -14,8 +14,6 @@ namespace Api.Features.Brewing.Brews.DTOs
     public double GrindSize { get; set; }
     public int BrewTime { get; set; }
     public double? BrewWeight { get; set; }
-    public double? BrewAddedWeight { get; set; }
-    public int? BrewAddedWeightTasteScore { get; set; }
     public string? Notes { get; set; }
   }
 
@@ -61,16 +59,6 @@ namespace Api.Features.Brewing.Brews.DTOs
         .GreaterThan(0)
         .When(x => x.BrewWeight.HasValue)
         .WithMessage("BrewWeight must be greater than 0");
-
-      RuleFor(x => x.BrewAddedWeight)
-        .GreaterThan(0)
-        .When(x => x.BrewAddedWeight.HasValue)
-        .WithMessage("BrewAddedWeight must be greater than 0");
-
-      RuleFor(x => x.BrewAddedWeightTasteScore)
-        .InclusiveBetween(1, 10)
-        .When(x => x.BrewAddedWeightTasteScore.HasValue)
-        .WithMessage("BrewAddedWeightTasteScore must be between 1 and 10");
 
       RuleFor(x => x.Notes)
         .MaximumLength(1000)

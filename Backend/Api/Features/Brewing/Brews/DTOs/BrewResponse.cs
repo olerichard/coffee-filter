@@ -23,8 +23,6 @@ public class BrewResponse
   public int BrewTime { get; set; }
   public double BrewWeight { get; set; }
   public int BrewTasteScore { get; set; }
-  public double BrewAddedWeight { get; set; }
-  public int BrewAddedTasteScore { get; set; }
   public string? Notes { get; set; }
   public DateTime BrewedOn { get; set; }
 }

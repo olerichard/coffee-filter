@@ -15,9 +15,6 @@ namespace Api.Database.Entities
     public int? BrewTime {get;set;}
     public double? BrewWeight {get;set;}
     public int? BrewTasteScore {get;set;}
-    public double? BrewAddedWeight {get;set;}
-    public int? BrewAddedWeightTasteScore {get;set;}
     public string? Notes {get;set;}
   }
-
 }

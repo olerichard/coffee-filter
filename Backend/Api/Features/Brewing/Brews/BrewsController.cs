@@ -70,8 +70,6 @@ namespace Api.Features.Brewing.Brews
         BrewTime = b.BrewTime ?? 0,
         BrewWeight = b.BrewWeight ?? 0,
         BrewTasteScore = b.BrewTasteScore ?? 0,
-        BrewAddedWeight = b.BrewAddedWeight ?? 0,
-        BrewAddedTasteScore = b.BrewAddedWeightTasteScore ?? 0,
         Notes = b.Notes,
         BrewedOn = b.CreatedOn ?? DateTime.UtcNow,
       }).OrderByDescending(b => b.BrewedOn) .ToList();
@@ -115,8 +113,6 @@ namespace Api.Features.Brewing.Brews
         BrewTime = request.BrewTime,
         BrewWeight = request.BrewWeight,
         BrewTasteScore = request.BrewTasteScore,
-        BrewAddedWeight = request.BrewAddedWeight,
-        BrewAddedWeightTasteScore = request.BrewAddedWeightTasteScore,
         Notes = request.Notes,
       };
 
@@ -176,8 +172,6 @@ namespace Api.Features.Brewing.Brews
         BrewTime = brew.BrewTime ?? 0,
         BrewWeight = brew.BrewWeight ?? 0,
         BrewTasteScore = brew.BrewTasteScore ?? 0,
-        BrewAddedWeight = brew.BrewAddedWeight ?? 0,
-        BrewAddedTasteScore = brew.BrewAddedWeightTasteScore ?? 0,
         Notes = brew.Notes,
         BrewedOn = brew.CreatedOn ?? DateTime.UtcNow,
       };
@@ -231,8 +225,6 @@ namespace Api.Features.Brewing.Brews
       existingBrew.BrewTime = brew.BrewTime;
       existingBrew.BrewWeight = brew.BrewWeight;
       existingBrew.BrewTasteScore = brew.BrewTasteScore;
-      existingBrew.BrewAddedWeight = brew.BrewAddedWeight;
-      existingBrew.BrewAddedWeightTasteScore = brew.BrewAddedWeightTasteScore;
       existingBrew.Notes = brew.Notes;
       existingBrew.CoffeeBagId = brew.CoffeeBagId;
 
