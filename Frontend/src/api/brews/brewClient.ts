@@ -35,8 +35,6 @@ class BrewClient {
     grindSize: number;
     brewTime: number;
     brewWeight?: number;
-    brewAddedWeight?: number;
-    brewAddedWeightTasteScore?: number;
     notes?: string;
   }) {
     const brewData = {
@@ -47,8 +45,6 @@ class BrewClient {
       grindSize: data.grindSize,
       brewTime: data.brewTime,
       brewWeight: data.brewWeight || null,
-      brewAddedWeight: data.brewAddedWeight || null,
-      brewAddedWeightTasteScore: data.brewAddedWeightTasteScore || null,
       notes: data.notes || null,
     };
 

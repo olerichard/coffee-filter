@@ -34,8 +34,6 @@ interface BrewFormData {
   grindSize: number;
   brewTime: number;
   brewWeight?: number;
-  brewAddedWeight?: number;
-  brewAddedWeightTasteScore?: number;
   notes?: string;
 }
 
@@ -218,44 +216,6 @@ function NewBrewPage() {
                   value={formData.notes || ''}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="brewAddedWeight">Added Weight (g)</Label>
-                <Input
-                  id="brewAddedWeight"
-                  type="number"
-                  step="0.1"
-                  value={formData.brewAddedWeight || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      brewAddedWeight: parseFloat(e.target.value) || undefined,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="brewAddedWeightTasteScore">
-                  Added Weight Taste Score
-                </Label>
-                <Input
-                  id="brewAddedWeightTasteScore"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={formData.brewAddedWeightTasteScore || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      brewAddedWeightTasteScore:
-                        parseInt(e.target.value) || undefined,
-                    })
                   }
                 />
               </div>

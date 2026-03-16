@@ -21,8 +21,6 @@ export const BrewRequestSchema = z.object({
   brewTime: z.number(),
   brewWeight: z.number(),
   brewTasteScore: z.number(),
-  brewAddedWeight: z.number().catch(0),
-  brewAddedTasteScore: z.number().catch(0),
   notes: z.string().optional(),
   brewedOn: z.iso.datetime({ offset: true }),
 });
