@@ -6,8 +6,8 @@ interface ScoreSelectorProps {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
-  className?: string;
   id?: string;
+  className?: string;
 }
 
 export function ScoreSelector({
@@ -20,18 +20,15 @@ export function ScoreSelector({
 }: ScoreSelectorProps) {
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const startValue = useRef(0);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      e.preventDefault();
-      setIsDragging(true);
-      startY.current = e.clientY;
-      startValue.current = value;
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    },
-    [value],
-  );
+  const touchStartY = useRef(0);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    startY.current = e.clientY;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -60,6 +57,34 @@ export function ScoreSelector({
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const sensitivity = 8;
+      const delta = touchStartY.current - e.touches[0].clientY;
+
+      if (delta >= sensitivity) {
+        if (value < max) onChange(value + 1);
+        touchStartY.current = e.touches[0].clientY;
+        return;
+      }
+
+      if (delta <= sensitivity * -1) {
+        if (value > min) onChange(value - 1);
+        touchStartY.current = e.touches[0].clientY;
+        return;
+      }
+    },
+    [value, min, max, onChange],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    // Cleanup if needed
+  }, []);
+
   const displayValue = value.toString().padStart(2, '0');
 
   return (
@@ -74,10 +99,14 @@ export function ScoreSelector({
         isDragging && 'bg-accent border-primary',
         className,
       )}
+      style={{ touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {displayValue}
     </div>

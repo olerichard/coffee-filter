@@ -3,6 +3,7 @@
 ## Commands
 
 ### Backend (.NET)
+
 - Build: `dotnet build Backend/Api/Api.csproj`
 - Test: `dotnet test Backend/Api/Api.csproj`
 - Run single test: `dotnet test --filter "TestMethodName"`
@@ -10,16 +11,18 @@
 - Apply migrations: `dotnet ef database update --project Backend/Api/Api.csproj`
 
 ### Frontend (React/TypeScript)
-- Build: `npm run build`
-- Test: `npm run test`
-- Run single test: `npm run test -- --run testName`
-- Lint: `npm run lint`
-- Format: `npm run format`
-- Dev: `npm run dev`
+
+- Build: `np run build`
+- Test: `np run test`
+- Run single test: `np run test -- --run testName`
+- Lint: `np run lint`
+- Format: `np run format`
+- Dev: `np run dev`
 
 ## Code Style
 
 ### .NET (Backend)
+
 - Nullable reference types enabled
 - Implicit usings enabled
 - Warnings treated as errors
@@ -29,6 +32,7 @@
 - No XML comments (1591 warnings suppressed)
 
 ### Validation
+
 - Use FluentValidation for all request validation
 - Always perform manual validation in controllers (not automatic validation)
 - Inject the validator as `[FromServices]` and call `validator.ValidateAsync(request)`
@@ -36,7 +40,7 @@
 - Example pattern (from AuthController/Login):
   ```csharp
   public async Task<IActionResult> Login(
-      [FromBody] LoginRequest request, 
+      [FromBody] LoginRequest request,
       [FromServices] LoginRequestValidator validator)
   {
       var validationResult = await validator.ValidateAsync(request);
@@ -49,6 +53,7 @@
   ```
 
 ### TypeScript (Frontend)
+
 - Strict mode enabled
 - Single quotes, no semicolons, trailing commas
 - Path aliases: `@/*` maps to `./src/*`
@@ -57,6 +62,7 @@
 - Use `clsx` and `tailwind-merge` for conditional classes
 
 ### General
+
 - EF Core migrations auto-apply on startup
 - Database in `~/.database/coffee-filter.db`
 - Use FluentValidation for validation
