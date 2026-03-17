@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-
 import { cn } from '@/lib/utils';
 
 interface ScoreSelectorProps {
@@ -8,6 +7,7 @@ interface ScoreSelectorProps {
   min?: number;
   max?: number;
   className?: string;
+  id?: string;
 }
 
 export function ScoreSelector({
@@ -15,6 +15,7 @@ export function ScoreSelector({
   onChange,
   min = 0,
   max = 99,
+  id,
   className,
 }: ScoreSelectorProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -63,6 +64,7 @@ export function ScoreSelector({
 
   return (
     <div
+      id={id}
       className={cn(
         'rounded-md border bg-background',
         'p-4  w-32 text-center',

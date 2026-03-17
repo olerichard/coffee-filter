@@ -35,78 +35,164 @@ export function CreateBrewForm({
       }}
       className="flex flex-col gap-4"
     >
-      <form.Field name="coffeeBagId">
-        {(field) => (
-          <Field>
-            <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
-            <Select
-              value={
-                field.state.value !== 0 ? field.state.value.toString() : ''
-              }
-              onValueChange={(value) => field.handleChange(parseInt(value))}
-            >
-              <SelectTrigger
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="coffeeBagId"
+      <div className="grid grid-cols-2 gap-4">
+        <form.Field name="brewType">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="brewType">Brew Type *</FieldLabel>
+              <Select
+                disabled
+                value={field.state.value}
+                onValueChange={field.handleChange}
               >
-                <SelectValue placeholder="Select a coffee bag" />
-              </SelectTrigger>
-              <SelectContent>
-                {coffeeBags.map((bag) => (
-                  <SelectItem key={bag.id} value={bag.id.toString()}>
-                    {bag.roaster} - {bag.origin}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {field.state.meta.errors.length > 0 &&
-              field.state.meta.isTouched && (
-                <FieldDescription>
-                  {field.state.meta.errors[0]?.message}
-                </FieldDescription>
-              )}
-          </Field>
-        )}
-      </form.Field>
+                <SelectTrigger
+                  aria-invalid={
+                    field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched
+                  }
+                  id="brewType"
+                >
+                  <SelectValue placeholder="Select brew type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BREW_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
 
-      <form.Field name="brewType">
-        {(field) => (
-          <Field>
-            <FieldLabel htmlFor="brewType">Brew Type *</FieldLabel>
-            <Select
-              disabled
-              value={field.state.value}
-              onValueChange={field.handleChange}
-            >
-              <SelectTrigger
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
+        <form.Field name="coffeeBagId">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
+              <Select
+                value={
+                  field.state.value !== 0 ? field.state.value.toString() : ''
                 }
-                id="brewType"
+                onValueChange={(value) => field.handleChange(parseInt(value))}
               >
-                <SelectValue placeholder="Select brew type" />
-              </SelectTrigger>
-              <SelectContent>
-                {BREW_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {field.state.meta.errors.length > 0 &&
-              field.state.meta.isTouched && (
-                <FieldDescription>
-                  {field.state.meta.errors[0]?.message}
-                </FieldDescription>
-              )}
-          </Field>
-        )}
-      </form.Field>
+                <SelectTrigger
+                  aria-invalid={
+                    field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched
+                  }
+                  id="coffeeBagId"
+                >
+                  <SelectValue placeholder="Select a coffee bag" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coffeeBags.map((bag) => (
+                    <SelectItem key={bag.id} value={bag.id.toString()}>
+                      {bag.roaster} - {bag.origin}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <form.Field name="coffeeDose">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
+              <ScoreSelector
+                id="coffeeDose"
+                value={field.state.value}
+                onChange={field.handleChange}
+                max={30}
+              />
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="grindSize">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
+              <ScoreSelector
+                id="grindSize"
+                value={field.state.value}
+                onChange={field.handleChange}
+                max={20}
+              />
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <form.Field name="brewTime">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
+              <ScoreSelector
+                id="brewTime"
+                value={field.state.value}
+                onChange={field.handleChange}
+                max={40}
+              />
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="brewWeight">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
+              <ScoreSelector
+                id="brewWeight"
+                value={field.state.value}
+                onChange={field.handleChange}
+                max={50}
+              />
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+      </div>
 
       <form.Field name="brewTasteScore">
         {(field) => (
@@ -127,143 +213,29 @@ export function CreateBrewForm({
         )}
       </form.Field>
 
-      <div className="grid grid-cols-3 gap-4">
-        <form.Field name="coffeeDose">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
-              <Input
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="coffeeDose"
-                type="number"
-                step="0.1"
-                value={field.state.value || ''}
-                onChange={(e) =>
-                  field.handleChange(parseFloat(e.target.value) || 0)
-                }
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
-        </form.Field>
-
-        <form.Field name="grindSize">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
-              <Input
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="grindSize"
-                type="number"
-                step="0.1"
-                value={field.state.value || ''}
-                onChange={(e) =>
-                  field.handleChange(parseFloat(e.target.value) || 0)
-                }
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
-        </form.Field>
-
-        <form.Field name="brewTime">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
-              <Input
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="brewTime"
-                type="number"
-                step="1"
-                value={field.state.value || ''}
-                onChange={(e) =>
-                  field.handleChange(parseInt(e.target.value) || 0)
-                }
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
-        </form.Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <form.Field name="brewWeight">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
-              <Input
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="brewWeight"
-                type="number"
-                step="0.1"
-                value={field.state.value || ''}
-                onChange={(e) => field.handleChange(parseFloat(e.target.value))}
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
-        </form.Field>
-
-        <form.Field name="notes">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="notes">Notes</FieldLabel>
-              <Input
-                aria-invalid={
-                  field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched
-                }
-                id="notes"
-                value={field.state.value || ''}
-                onChange={(e) => field.handleChange(e.currentTarget.value)}
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
-        </form.Field>
-      </div>
+      <form.Field name="notes">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor="notes">Notes</FieldLabel>
+            <Input
+              aria-invalid={
+                field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched
+              }
+              id="notes"
+              value={field.state.value || ''}
+              onChange={(e) => field.handleChange(e.currentTarget.value)}
+              onBlur={field.handleBlur}
+            />
+            {field.state.meta.errors.length > 0 &&
+              field.state.meta.isTouched && (
+                <FieldDescription>
+                  {field.state.meta.errors[0]?.message}
+                </FieldDescription>
+              )}
+          </Field>
+        )}
+      </form.Field>
 
       <div className="flex gap-2 pt-4">
         <Button type="submit" disabled={isLoading}>
