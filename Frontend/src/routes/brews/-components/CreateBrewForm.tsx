@@ -11,6 +11,7 @@ import {
 import { ScoreSelector } from '@/components/brews/ScoreSelector';
 import { useCreateBrew, BREW_TYPES } from './useCreateBrew';
 import type { CoffeeBag } from '@/api/brews/brewRequestSchemas';
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 
 interface CreateBrewFormProps {
   coffeeBags: CoffeeBag[];
@@ -117,9 +118,13 @@ export function CreateBrewForm({
       <div className="grid grid-cols-3 gap-4">
         <form.Field name="coffeeDose">
           {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="coffeeDose">Dose (g) *</Label>
+            <Field>
+              <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
               <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
                 id="coffeeDose"
                 type="number"
                 step="0.1"
@@ -131,11 +136,11 @@ export function CreateBrewForm({
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
-                  <p className="text-sm text-red-500">
+                  <FieldDescription>
                     {field.state.meta.errors[0]?.message}
-                  </p>
+                  </FieldDescription>
                 )}
-            </div>
+            </Field>
           )}
         </form.Field>
 
