@@ -5,5 +5,5 @@ interface BaseLayoutProps {
 }
 
 export function BaseLayout({ children }: BaseLayoutProps) {
-  return <div className="mx-auto max-w-2xl px-4 py-6">{children}</div>;
+  return <div className="mx-auto max-w-2xl">{children}</div>;
 }
