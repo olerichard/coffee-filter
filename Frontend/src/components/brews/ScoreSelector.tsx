@@ -36,14 +36,22 @@ export function ScoreSelector({
     (e: React.PointerEvent) => {
       if (!isDragging) return;
 
-      const delta = startY.current - e.clientY;
       const sensitivity = 10;
-      const newValue = startValue.current + Math.round(delta / sensitivity);
-      const clampedValue = Math.max(min, Math.min(max, newValue));
+      const delta = startY.current - e.clientY;
 
-      onChange(clampedValue);
+      if (delta >= sensitivity) {
+        if (value < max) onChange(value + 1);
+        startY.current = e.clientY;
+        return;
+      }
+
+      if (delta <= sensitivity * -1) {
+        if (value > min) onChange(value - 1);
+        startY.current = e.clientY;
+        return;
+      }
     },
-    [isDragging, min, max, onChange],
+    [isDragging, min, max, onChange, value],
   );
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
