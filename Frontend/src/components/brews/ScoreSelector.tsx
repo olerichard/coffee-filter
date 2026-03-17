@@ -36,7 +36,7 @@ export function ScoreSelector({
     (e: React.PointerEvent) => {
       if (!isDragging) return;
 
-      const sensitivity = 10;
+      const sensitivity = 20;
       const delta = startY.current - e.clientY;
 
       if (delta >= sensitivity) {
