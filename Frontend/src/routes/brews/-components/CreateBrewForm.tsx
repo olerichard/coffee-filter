@@ -1,6 +1,7 @@
+import { BREW_TYPES, useCreateBrew } from './useCreateBrew';
+import type { CoffeeBag } from '@/api/brews/brewRequestSchemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,12 +10,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScoreSelector } from '@/components/brews/ScoreSelector';
-import { useCreateBrew, BREW_TYPES } from './useCreateBrew';
-import type { CoffeeBag } from '@/api/brews/brewRequestSchemas';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 
 interface CreateBrewFormProps {
-  coffeeBags: CoffeeBag[];
+  coffeeBags: Array<CoffeeBag>;
   isLoading: boolean;
   onCancel: () => void;
 }
@@ -38,15 +37,21 @@ export function CreateBrewForm({
     >
       <form.Field name="coffeeBagId">
         {(field) => (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="coffeeBag">Coffee Bag *</Label>
+          <Field>
+            <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
             <Select
               value={
                 field.state.value !== 0 ? field.state.value.toString() : ''
               }
               onValueChange={(value) => field.handleChange(parseInt(value))}
             >
-              <SelectTrigger id="coffeeBag">
+              <SelectTrigger
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
+                id="coffeeBagId"
+              >
                 <SelectValue placeholder="Select a coffee bag" />
               </SelectTrigger>
               <SelectContent>
@@ -59,23 +64,30 @@ export function CreateBrewForm({
             </Select>
             {field.state.meta.errors.length > 0 &&
               field.state.meta.isTouched && (
-                <p className="text-sm text-red-500">
+                <FieldDescription>
                   {field.state.meta.errors[0]?.message}
-                </p>
+                </FieldDescription>
               )}
-          </div>
+          </Field>
         )}
       </form.Field>
 
       <form.Field name="brewType">
         {(field) => (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="brewType">Brew Type *</Label>
+          <Field>
+            <FieldLabel htmlFor="brewType">Brew Type *</FieldLabel>
             <Select
+              disabled
               value={field.state.value}
               onValueChange={field.handleChange}
             >
-              <SelectTrigger id="brewType">
+              <SelectTrigger
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
+                id="brewType"
+              >
                 <SelectValue placeholder="Select brew type" />
               </SelectTrigger>
               <SelectContent>
@@ -88,18 +100,18 @@ export function CreateBrewForm({
             </Select>
             {field.state.meta.errors.length > 0 &&
               field.state.meta.isTouched && (
-                <p className="text-sm text-red-500">
+                <FieldDescription>
                   {field.state.meta.errors[0]?.message}
-                </p>
+                </FieldDescription>
               )}
-          </div>
+          </Field>
         )}
       </form.Field>
 
       <form.Field name="brewTasteScore">
         {(field) => (
-          <div className="flex flex-col gap-2 ">
-            <Label htmlFor="brewTasteScore">Taste Score *</Label>
+          <Field>
+            <FieldLabel htmlFor="brewTasteScore">Taste Score *</FieldLabel>
             <ScoreSelector
               value={field.state.value}
               onChange={field.handleChange}
@@ -107,11 +119,11 @@ export function CreateBrewForm({
             />
             {field.state.meta.errors.length > 0 &&
               field.state.meta.isTouched && (
-                <p className="text-sm text-red-500">
+                <FieldDescription>
                   {field.state.meta.errors[0]?.message}
-                </p>
+                </FieldDescription>
               )}
-          </div>
+          </Field>
         )}
       </form.Field>
 
@@ -146,9 +158,13 @@ export function CreateBrewForm({
 
         <form.Field name="grindSize">
           {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="grindSize">Grind Size *</Label>
+            <Field>
+              <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
               <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
                 id="grindSize"
                 type="number"
                 step="0.1"
@@ -159,20 +175,24 @@ export function CreateBrewForm({
                 onBlur={field.handleBlur}
               />
               {field.state.meta.errors.length > 0 &&
-                field.state.meta.isBlurred && (
-                  <p className="text-sm text-red-500">
+                field.state.meta.isTouched && (
+                  <FieldDescription>
                     {field.state.meta.errors[0]?.message}
-                  </p>
+                  </FieldDescription>
                 )}
-            </div>
+            </Field>
           )}
         </form.Field>
 
         <form.Field name="brewTime">
           {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="brewTime">Brew Time (s) *</Label>
+            <Field>
+              <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
               <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
                 id="brewTime"
                 type="number"
                 step="1"
@@ -184,11 +204,11 @@ export function CreateBrewForm({
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
-                  <p className="text-sm text-red-500">
+                  <FieldDescription>
                     {field.state.meta.errors[0]?.message}
-                  </p>
+                  </FieldDescription>
                 )}
-            </div>
+            </Field>
           )}
         </form.Field>
       </div>
@@ -196,9 +216,13 @@ export function CreateBrewForm({
       <div className="grid grid-cols-2 gap-4">
         <form.Field name="brewWeight">
           {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="brewWeight">Brew Weight (g)</Label>
+            <Field>
+              <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
               <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
                 id="brewWeight"
                 type="number"
                 step="0.1"
@@ -208,19 +232,23 @@ export function CreateBrewForm({
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
-                  <p className="text-sm text-red-500">
+                  <FieldDescription>
                     {field.state.meta.errors[0]?.message}
-                  </p>
+                  </FieldDescription>
                 )}
-            </div>
+            </Field>
           )}
         </form.Field>
 
         <form.Field name="notes">
           {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="notes">Notes</Label>
+            <Field>
+              <FieldLabel htmlFor="notes">Notes</FieldLabel>
               <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
                 id="notes"
                 value={field.state.value || ''}
                 onChange={(e) => field.handleChange(e.currentTarget.value)}
@@ -228,11 +256,11 @@ export function CreateBrewForm({
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
-                  <p className="text-sm text-red-500">
+                  <FieldDescription>
                     {field.state.meta.errors[0]?.message}
-                  </p>
+                  </FieldDescription>
                 )}
-            </div>
+            </Field>
           )}
         </form.Field>
       </div>

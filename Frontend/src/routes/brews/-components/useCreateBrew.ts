@@ -4,16 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiClients } from '@/api/apiClients';
 
-export const BREW_TYPES = [
-  'Espresso',
-  'Pour Over',
-  'French Press',
-  'AeroPress',
-  'Moka Pot',
-  'Cold Brew',
-  'Drip',
-  'Siphon',
-] as const;
+export const BREW_TYPES = ['Espresso'] as const;
 
 export const BrewFormSchema = z.object({
   coffeeBagId: z.number().min(1, 'Coffee bag is required'),
@@ -41,7 +32,7 @@ export function useCreateBrew() {
   const form = useForm({
     defaultValues: {
       coffeeBagId: 0,
-      brewType: '',
+      brewType: 'Espresso',
       brewTasteScore: 0,
       coffeeDose: 0,
       grindSize: 0,
