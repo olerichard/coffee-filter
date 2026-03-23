@@ -120,6 +120,7 @@ export function CreateBrewForm({
                 value={field.state.value}
                 onChange={field.handleChange}
                 max={30}
+                allowDecimal
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
