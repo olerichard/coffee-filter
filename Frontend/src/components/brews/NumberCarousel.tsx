@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-interface ScoreSelectorProps {
+interface NumberCarouselProps {
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -10,14 +10,14 @@ interface ScoreSelectorProps {
   className?: string;
 }
 
-export function ScoreSelector({
+export function NumberCarousel({
   value,
   onChange,
   min = 0,
   max = 99,
   id,
   className,
-}: ScoreSelectorProps) {
+}: NumberCarouselProps) {
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
 

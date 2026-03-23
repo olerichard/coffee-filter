@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScoreSelector } from '@/components/brews/ScoreSelector';
+import { NumberCarousel } from '@/components/brews/NumberCarousel';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 
 interface CreateBrewFormProps {
@@ -115,7 +115,7 @@ export function CreateBrewForm({
           {(field) => (
             <Field>
               <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
-              <ScoreSelector
+              <NumberCarousel
                 id="coffeeDose"
                 value={field.state.value}
                 onChange={field.handleChange}
@@ -135,7 +135,7 @@ export function CreateBrewForm({
           {(field) => (
             <Field>
               <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
-              <ScoreSelector
+              <NumberCarousel
                 id="grindSize"
                 value={field.state.value}
                 onChange={field.handleChange}
@@ -157,7 +157,7 @@ export function CreateBrewForm({
           {(field) => (
             <Field>
               <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
-              <ScoreSelector
+              <NumberCarousel
                 id="brewTime"
                 value={field.state.value}
                 onChange={field.handleChange}
@@ -177,7 +177,7 @@ export function CreateBrewForm({
           {(field) => (
             <Field>
               <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
-              <ScoreSelector
+              <NumberCarousel
                 id="brewWeight"
                 value={field.state.value}
                 onChange={field.handleChange}
@@ -198,7 +198,7 @@ export function CreateBrewForm({
         {(field) => (
           <Field>
             <FieldLabel htmlFor="brewTasteScore">Taste Score *</FieldLabel>
-            <ScoreSelector
+            <NumberCarousel
               value={field.state.value}
               onChange={field.handleChange}
               max={10}
@@ -219,8 +219,7 @@ export function CreateBrewForm({
             <FieldLabel htmlFor="notes">Notes</FieldLabel>
             <Input
               aria-invalid={
-                field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched
+                field.state.meta.errors.length > 0 && field.state.meta.isTouched
               }
               id="notes"
               value={field.state.value || ''}
