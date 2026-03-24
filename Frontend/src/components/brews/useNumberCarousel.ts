@@ -106,9 +106,10 @@ interface UseDecimalOptions {
   onChange: (value: number) => void;
   min: number;
   max: number;
+  enabled: boolean;
 }
 
-function useDecimal({ whole, decimal, onChange, min, max }: UseDecimalOptions) {
+function useDecimal({ whole, decimal, onChange, min, max, enabled }: UseDecimalOptions) {
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
   const touchStartY = useRef(0);
@@ -132,6 +133,7 @@ function useDecimal({ whole, decimal, onChange, min, max }: UseDecimalOptions) {
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (!enabled) return;
     e.preventDefault();
     setIsDragging(true);
     startY.current = e.clientY;
@@ -139,7 +141,7 @@ function useDecimal({ whole, decimal, onChange, min, max }: UseDecimalOptions) {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || !enabled) return;
 
     const direction = getDirection(startY.current, e.clientY, 20);
     if (direction !== 'stay') {
@@ -149,15 +151,18 @@ function useDecimal({ whole, decimal, onChange, min, max }: UseDecimalOptions) {
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (!enabled) return;
     setIsDragging(false);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!enabled) return;
     touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!enabled) return;
     const direction = getDirection(
       touchStartY.current,
       e.touches[0].clientY,
@@ -171,10 +176,10 @@ function useDecimal({ whole, decimal, onChange, min, max }: UseDecimalOptions) {
 
   const handleTouchEnd = () => {};
 
-  const displayValue = decimal.toString();
+  const displayValue = enabled ? decimal.toString() : '';
 
   return {
-    isDragging,
+    isDragging: enabled ? isDragging : false,
     displayValue,
     handlers: {
       onPointerDown: handlePointerDown,
@@ -220,26 +225,24 @@ export function useNumberCarousel({
     max,
   });
 
-  const decimalResult =
-    allowDecimal && decimal !== null
-      ? useDecimal({
-          whole,
-          decimal,
-          onChange,
-          min,
-          max,
-        })
-      : null;
+  const decimalResult = useDecimal({
+    whole,
+    decimal: decimal ?? 0,
+    onChange,
+    min,
+    max,
+    enabled: allowDecimal && decimal !== null,
+  });
 
   return {
     isDraggingWhole: wholeResult.isDragging,
-    isDraggingDecimal: decimalResult?.isDragging ?? false,
+    isDraggingDecimal: decimalResult.isDragging,
     displayWhole: allowDecimal ? whole.toString() : wholeResult.displayValue,
-    displayDecimal: decimalResult?.displayValue ?? '',
-    isDragging: wholeResult.isDragging || (decimalResult?.isDragging ?? false),
+    displayDecimal: decimalResult.displayValue,
+    isDragging: wholeResult.isDragging || decimalResult.isDragging,
     handlers: {
       whole: wholeResult.handlers,
-      decimal: decimalResult?.handlers,
+      decimal: decimalResult.handlers,
     },
   };
 }
