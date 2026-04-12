@@ -30,8 +30,9 @@ function useWhole({ whole, decimal, onChange, min, max }: UseWholeOptions) {
     if (direction === 'stay') return;
 
     if (direction === 'dec') {
-      if (whole <= min) return;
-      onChange(whole - 1 + (decimal ?? 0) / 10);
+      const newValue = whole - 1 + (decimal ?? 0) / 10;
+      if (newValue < min) return;
+      onChange(newValue);
       return;
     }
 
@@ -125,11 +126,14 @@ function useDecimal({ whole, decimal, onChange, min, max, enabled }: UseDecimalO
       onChange(newWhole + newDecimal / 10);
     }
 
-    if (whole <= min && decimal === 0) return;
-    const newDecimal = decimal - 1 < 0 ? 9 : decimal - 1;
-    const wholeDecrement = decimal - 1 < 0 ? -1 : 0;
-    const newWhole = Math.max(whole + wholeDecrement, min);
-    onChange(newWhole + newDecimal / 10);
+    if (direction === 'dec') {
+      const newDecimal = decimal - 1 < 0 ? 9 : decimal - 1;
+      const wholeDecrement = decimal - 1 < 0 ? -1 : 0;
+      const newWhole = whole + wholeDecrement;
+      const newValue = newWhole + newDecimal / 10;
+      if (newValue < min) return;
+      onChange(newValue);
+    }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {

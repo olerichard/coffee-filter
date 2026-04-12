@@ -119,6 +119,7 @@ export function CreateBrewForm({
                 id="coffeeDose"
                 value={field.state.value}
                 onChange={field.handleChange}
+                min={1}
                 max={30}
                 allowDecimal
               />
@@ -138,8 +139,10 @@ export function CreateBrewForm({
               <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
               <NumberCarousel
                 id="grindSize"
+                allowDecimal
                 value={field.state.value}
                 onChange={field.handleChange}
+                min={0.5}
                 max={20}
               />
               {field.state.meta.errors.length > 0 &&
@@ -162,6 +165,7 @@ export function CreateBrewForm({
                 id="brewTime"
                 value={field.state.value}
                 onChange={field.handleChange}
+                min={1}
                 max={40}
               />
               {field.state.meta.errors.length > 0 &&
@@ -182,6 +186,7 @@ export function CreateBrewForm({
                 id="brewWeight"
                 value={field.state.value}
                 onChange={field.handleChange}
+                min={1}
                 max={50}
               />
               {field.state.meta.errors.length > 0 &&

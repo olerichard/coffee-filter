@@ -20,26 +20,20 @@ export function NumberCarousel({
   id,
   className,
 }: NumberCarouselProps) {
-  const {
-    isDraggingWhole,
-    isDraggingDecimal,
-    displayWhole,
-    displayDecimal,
-    isDragging,
-    handlers,
-  } = useNumberCarousel({
-    value,
-    onChange,
-    min,
-    max,
-    allowDecimal,
-  });
+  const { displayWhole, displayDecimal, isDragging, handlers } =
+    useNumberCarousel({
+      value,
+      onChange,
+      min,
+      max,
+      allowDecimal,
+    });
 
   return (
     <div
       id={id}
       className={cn(
-        'rounded-md border bg-background',
+        'relative rounded-md border bg-background',
         'p-4 w-32 text-center',
         'text-6xl font-bold tabular-nums',
         'cursor-grab active:cursor-grabbing',
@@ -50,34 +44,42 @@ export function NumberCarousel({
       style={{ touchAction: 'none' }}
     >
       {allowDecimal ? (
-        <div className="flex justify-center items-center">
-          <div
-            className={cn(
-              'py-2 px-1 rounded cursor-grab active:cursor-grabbing select-none',
-              isDraggingWhole && 'bg-accent/50 rounded',
-            )}
-            {...handlers.whole}
-          >
-            {displayWhole}
-          </div>
-          <div
-            className={cn('text-4xl ', isDraggingDecimal && 'text-foreground')}
-          >
-            .
-          </div>
-          <div
-            className={cn(
-              'py-2 px-1 rounded cursor-grab active:cursor-grabbing select-none',
-              isDraggingDecimal && 'bg-accent/50 rounded',
-            )}
-            {...handlers.decimal}
-          >
-            {displayDecimal}
-          </div>
+        <div className="absolute inset-0 flex">
+          <div className="flex-1" {...handlers.whole} />
+          <div className="flex-1" {...handlers.decimal} />
         </div>
       ) : (
-        <div {...handlers.whole}>{displayWhole}</div>
+        <div
+          className="absolute inset-0 cursor-grab active:cursor-grabbing"
+          {...handlers.whole}
+        />
       )}
+      <div className="flex justify-center items-center">
+        <div
+          className={cn(
+            'py-2 px-1 rounded select-none cursor-grab active:cursor-grabbing',
+          )}
+        >
+          {displayWhole}
+        </div>
+        <div
+          className={cn(
+            'text-4xl',
+
+            !allowDecimal && 'invisible',
+          )}
+        >
+          .
+        </div>
+        <div
+          className={cn(
+            'py-2 px-1 rounded select-none',
+            !allowDecimal && 'invisible',
+          )}
+        >
+          {displayDecimal}
+        </div>
+      </div>
     </div>
   );
 }

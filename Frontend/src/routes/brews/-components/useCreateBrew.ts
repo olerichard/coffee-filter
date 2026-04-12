@@ -9,7 +9,7 @@ export const BREW_TYPES = ['Espresso'] as const;
 export const BrewFormSchema = z.object({
   coffeeBagId: z.number().min(1, 'Coffee bag is required'),
   brewType: z.string().min(1, 'Brew type is required'),
-  brewTasteScore: z.number().min(1, 'Taste score is required').max(10),
+  brewTasteScore: z.number().max(10),
   coffeeDose: z.number().positive('Dose is required'),
   grindSize: z.number().positive('Grind size is required'),
   brewTime: z.number().positive('Brew time is required'),
