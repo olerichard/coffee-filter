@@ -9,6 +9,7 @@ namespace Api.Features.Brewing.Brews
 
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
+  using Microsoft.AspNetCore.Mvc.ModelBinding;
   using Microsoft.EntityFrameworkCore;
 
   [ApiController]
@@ -94,7 +95,12 @@ namespace Api.Features.Brewing.Brews
       var validationResult = await validator.ValidateAsync(request);
       if (!validationResult.IsValid)
       {
-        return BadRequest(validationResult.Errors);
+        var modelState = new ModelStateDictionary();
+        foreach (var error in validationResult.Errors)
+        {
+          modelState.AddModelError(error.PropertyName, error.ErrorMessage);
+        }
+        return ValidationProblem(modelState);
       }
 
       var userId = _currentUserService.GetCurrentUserId();

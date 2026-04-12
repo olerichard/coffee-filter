@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -19,27 +19,33 @@ export const BrewFormSchema = z.object({
 
 export type BrewFormValues = z.infer<typeof BrewFormSchema>;
 
-export function useCreateBrew() {
-  const navigate = useNavigate();
+interface UseCreateBrewOptions {
+  onSuccess: () => void;
+}
+
+export function useCreateBrew({ onSuccess }: UseCreateBrewOptions) {
+  const queryClient = useQueryClient();
 
   const createBrewMutation = useMutation({
     mutationFn: (data: BrewFormValues) => apiClients.brew.createBrew(data),
     onSuccess: () => {
-      navigate({ to: '/' });
+      onSuccess();
     },
   });
 
+  const defaultValues: BrewFormValues = {
+    coffeeBagId: 0,
+    brewType: 'Espresso',
+    brewTasteScore: 0,
+    coffeeDose: 18,
+    grindSize: 2,
+    brewTime: 27,
+    brewWeight: 37,
+    notes: '',
+  };
+
   const form = useForm({
-    defaultValues: {
-      coffeeBagId: 0,
-      brewType: 'Espresso',
-      brewTasteScore: 0,
-      coffeeDose: 18,
-      grindSize: 2,
-      brewTime: 27,
-      brewWeight: 37,
-      notes: '',
-    } as BrewFormValues,
+    defaultValues: defaultValues,
     validators: {
       onChange: BrewFormSchema,
       onSubmit: BrewFormSchema,

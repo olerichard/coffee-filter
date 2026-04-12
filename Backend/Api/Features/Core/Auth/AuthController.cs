@@ -6,6 +6,7 @@ namespace Api.Features.Core.Auth
 
   using Microsoft.AspNetCore.Identity;
   using Microsoft.AspNetCore.Mvc;
+  using Microsoft.AspNetCore.Mvc.ModelBinding;
   using Microsoft.EntityFrameworkCore;
 
   [ApiController]
@@ -29,7 +30,12 @@ namespace Api.Features.Core.Auth
       var validationResult = await validator.ValidateAsync(request);
       if (!validationResult.IsValid)
       {
-        return BadRequest(validationResult.Errors);
+      var modelState = new ModelStateDictionary();
+      foreach (var error in validationResult.Errors)
+      {
+        modelState.AddModelError(error.PropertyName, error.ErrorMessage);
+      }
+      return ValidationProblem(modelState);
       }
 
       var userEntity = await _dbContext.Users

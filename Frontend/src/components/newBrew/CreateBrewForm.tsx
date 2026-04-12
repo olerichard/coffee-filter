@@ -23,7 +23,11 @@ export function CreateBrewForm({
   isLoading: parentLoading,
   onCancel,
 }: CreateBrewFormProps) {
-  const { form, isLoading: mutationLoading } = useCreateBrew();
+  const { form, isLoading: mutationLoading } = useCreateBrew({
+    onSuccess: () => {
+      onCancel();
+    },
+  });
 
   const isLoading = parentLoading || mutationLoading;
 
@@ -247,7 +251,7 @@ export function CreateBrewForm({
           {isLoading ? 'Saving...' : 'Save Brew'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          Hide
         </Button>
       </div>
     </form>
