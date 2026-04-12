@@ -85,7 +85,7 @@ namespace Api.Features.Brewing.Brews
     /// <param name="validator">The validator for the request.</param>
     /// <returns>The created brew.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(BrewResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateBrew(
@@ -125,7 +125,12 @@ namespace Api.Features.Brewing.Brews
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();
 
-      return CreatedAtAction(nameof(GetBrewById), new { id = brew.Id }, brew);
+      var createdBrew = await _dbContext.Brews
+        .Include(b => b.CoffeeBag)
+        .FirstAsync(b => b.Id == brew.Id);
+
+      var response = createdBrew.ToBrewResponse();
+      return CreatedAtAction(nameof(GetBrewById), new { id = response.Id }, response);
     }
 
     /// <summary>
@@ -156,33 +161,8 @@ namespace Api.Features.Brewing.Brews
       {
         return NotFound();
       }
-
-      var brewDto = new BrewResponse
-      {
-        Id = brew.Id,
-        CoffeeBagId = brew.CoffeeBagId,
-        CoffeeBag = new CoffeeBagResponse
-        {
-          Id = brew.CoffeeBag.Id,
-          UserId = brew.CoffeeBag.UserId,
-          Roaster = brew.CoffeeBag.Roaster,
-          Origin = brew.CoffeeBag.Origin,
-          RoastStyle = brew.CoffeeBag.RoastStyle,
-          FlavourNotes = brew.CoffeeBag.FlavourNotes,
-          Opened = brew.CoffeeBag.Opened,
-          Emptied = brew.CoffeeBag.Emptied,
-        },
-        BrewType = brew.BrewType ?? "",
-        CoffeeDose = brew.CoffeeDose ?? 0,
-        GrindSize = brew.GrindSize ?? 0,
-        BrewTime = brew.BrewTime ?? 0,
-        BrewWeight = brew.BrewWeight ?? 0,
-        BrewTasteScore = brew.BrewTasteScore ?? 0,
-        Notes = brew.Notes,
-        BrewedOn = brew.CreatedOn ?? DateTime.UtcNow,
-      };
-
-      return Ok(brewDto);
+      
+      return Ok(brew.ToBrewResponse());
     }
 
     /// <summary>

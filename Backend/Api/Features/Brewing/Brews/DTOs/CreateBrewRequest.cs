@@ -40,8 +40,8 @@ namespace Api.Features.Brewing.Brews.DTOs
         .WithMessage("BrewType must not exceed 50 characters");
 
       RuleFor(x => x.BrewTasteScore)
-        .InclusiveBetween(1, 10)
-        .WithMessage("BrewTasteScore must be between 1 and 10");
+        .InclusiveBetween(0, 10)
+        .WithMessage("BrewTasteScore must be between 0 and 10");
 
       RuleFor(x => x.CoffeeDose)
         .GreaterThan(0)
