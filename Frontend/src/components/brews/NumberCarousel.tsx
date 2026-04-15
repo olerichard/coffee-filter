@@ -65,8 +65,7 @@ export function NumberCarousel({
         <div
           className={cn(
             'text-4xl',
-
-            !allowDecimal && 'invisible',
+            !allowDecimal && 'hidden',
           )}
         >
           .
@@ -74,7 +73,7 @@ export function NumberCarousel({
         <div
           className={cn(
             'py-2 px-1 rounded select-none',
-            !allowDecimal && 'invisible',
+            !allowDecimal && 'hidden',
           )}
         >
           {displayDecimal}
