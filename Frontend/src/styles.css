@@ -2,8 +2,6 @@
 
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
 body {
   @apply m-0;
   font-family:
@@ -19,75 +17,43 @@ code {
 }
 
 :root {
-  --background: oklch(59.796% 0.07943 59.398);
-  --foreground: oklch(0.18 0.025 42);
-  --card: oklch(0.85 0.04 55);
-  --card-foreground: oklch(0.18 0.025 42);
-  --popover: oklch(0.85 0.04 55);
-  --popover-foreground: oklch(0.18 0.025 42);
-  --primary: oklch(0.22 0.05 42);
-  --primary-foreground: oklch(0.92 0.02 48);
-  --secondary: oklch(0.75 0.05 55);
-  --secondary-foreground: oklch(0.18 0.025 42);
-  --muted: oklch(0.72 0.05 55);
-  --muted-foreground: oklch(0.42 0.04 48);
-  --accent: oklch(0.7 0.05 55);
-  --accent-foreground: oklch(0.18 0.025 42);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.65 0.05 55);
-  --input: oklch(0.75 0.05 55);
-  --ring: oklch(0.22 0.05 42);
-  --chart-1: oklch(0.3 0.08 40);
-  --chart-2: oklch(0.25 0.07 42);
-  --chart-3: oklch(0.22 0.06 40);
-  --chart-4: oklch(0.35 0.07 40);
-  --chart-5: oklch(0.28 0.08 38);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.8 0.04 55);
-  --sidebar-foreground: oklch(0.18 0.025 42);
-  --sidebar-primary: oklch(0.22 0.05 42);
-  --sidebar-primary-foreground: oklch(0.92 0.02 48);
-  --sidebar-accent: oklch(0.72 0.05 55);
-  --sidebar-accent-foreground: oklch(0.18 0.025 42);
-  --sidebar-border: oklch(0.65 0.05 55);
-  --sidebar-ring: oklch(0.22 0.05 42);
+  --background: oklch(12% 0.02 280);
+  --foreground: oklch(80% 0.015 30);
+  --card: oklch(16% 0.025 280);
+  --card-foreground: oklch(75% 0.02 30);
+  --popover: oklch(16% 0.025 280);
+  --popover-foreground: oklch(75% 0.02 30);
+  --primary: oklch(60% 0.18 25);
+  --primary-foreground: oklch(15% 0.02 280);
+  --secondary: oklch(22% 0.03 280);
+  --secondary-foreground: oklch(75% 0.02 30);
+  --muted: oklch(22% 0.03 280);
+  --muted-foreground: oklch(60% 0.02 30);
+  --accent: oklch(60% 0.18 25);
+  --accent-foreground: oklch(15% 0.02 280);
+  --destructive: oklch(0.5 0.14 20);
+  --destructive-foreground: oklch(75% 0.02 30);
+  --border: oklch(28% 0.03 280);
+  --input: oklch(28% 0.03 280);
+  --ring: oklch(60% 0.18 25);
+  --active: oklch(35% 0.06 280);
+  --chart-1: oklch(60% 0.18 25);
+  --chart-2: oklch(55% 0.14 25);
+  --chart-3: oklch(50% 0.12 25);
+  --chart-4: oklch(65% 0.16 25);
+  --chart-5: oklch(45% 0.1 25);
+  --radius: 1rem;
+  --sidebar: oklch(18% 0.03 280);
+  --sidebar-foreground: oklch(75% 0.02 30);
+  --sidebar-primary: oklch(60% 0.18 25);
+  --sidebar-primary-foreground: oklch(15% 0.02 280);
+  --sidebar-accent: oklch(22% 0.03 280);
+  --sidebar-accent-foreground: oklch(75% 0.02 30);
+  --sidebar-border: oklch(28% 0.03 280);
+  --sidebar-ring: oklch(60% 0.18 25);
 }
 
-.dark {
-  --background: oklch(0.1 0.04 10);
-  --foreground: oklch(0.9 0.02 25);
-  --card: oklch(28.571% 0.02316 27.202);
-  --card-foreground: oklch(45.771% 0.00128 14.963);
-  --popover: oklch(0.2 0.03 28);
-  --popover-foreground: oklch(0.9 0.02 25);
-  --primary: oklch(0.5 0.06 20);
-  --primary-foreground: oklch(0.15 0.03 25);
-  --secondary: oklch(0.22 0.03 28);
-  --secondary-foreground: oklch(0.9 0.02 25);
-  --muted: oklch(0.18 0.03 28);
-  --muted-foreground: oklch(0.6 0.03 25);
-  --accent: oklch(0.24 0.03 28);
-  --accent-foreground: oklch(0.9 0.02 25);
-  --destructive: oklch(0.35 0.12 25);
-  --destructive-foreground: oklch(0.9 0.02 25);
-  --border: oklch(0.25 0.03 28);
-  --input: oklch(0.22 0.03 28);
-  --ring: oklch(0.5 0.06 20);
-  --chart-1: oklch(0.5 0.1 18);
-  --chart-2: oklch(0.45 0.08 20);
-  --chart-3: oklch(0.4 0.07 18);
-  --chart-4: oklch(0.55 0.08 18);
-  --chart-5: oklch(0.48 0.09 16);
-  --sidebar: oklch(0.18 0.03 28);
-  --sidebar-foreground: oklch(0.9 0.02 25);
-  --sidebar-primary: oklch(0.5 0.06 20);
-  --sidebar-primary-foreground: oklch(0.15 0.03 25);
-  --sidebar-accent: oklch(0.24 0.03 28);
-  --sidebar-accent-foreground: oklch(0.9 0.02 25);
-  --sidebar-border: oklch(0.25 0.03 28);
-  --sidebar-ring: oklch(0.5 0.06 20);
-}
+
 
 @theme inline {
   --color-background: var(--background);
@@ -109,6 +75,7 @@ code {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-active: var(--active);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

@@ -38,7 +38,7 @@ export function NumberCarousel({
         'text-6xl font-bold tabular-nums',
         'cursor-grab active:cursor-grabbing',
         'transition-colors duration-150',
-        isDragging && 'bg-accent border-primary',
+        isDragging && 'bg-active border-primary',
         className,
       )}
       style={{ touchAction: 'none' }}
