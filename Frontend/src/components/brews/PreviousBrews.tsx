@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiClients } from '@/api/apiClients';
+import { StarDisplay } from '@/components/ui/StarDisplay';
 
 export function PreviousBrews() {
   const query = useQuery({
@@ -68,12 +69,6 @@ function BrewCard({ brew }: { brew: Brew }) {
                 {brew.coffeeBag.origin}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <span className="text-amber-500">★</span>
-              <span className="text-sm font-medium">
-                {brew.brewTasteScore}/10
-              </span>
-            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -87,6 +82,8 @@ function BrewCard({ brew }: { brew: Brew }) {
             <span className="text-muted-foreground">·</span>
             <span>{brew.brewWeight}g</span>
           </div>
+
+          <StarDisplay value={brew.brewTasteScore} />
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-muted-foreground text-sm">{formattedDate}</p>

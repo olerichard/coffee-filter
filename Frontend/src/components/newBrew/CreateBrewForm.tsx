@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { NumberCarousel } from '@/components/brews/NumberCarousel';
+import { StarSelector } from '@/components/ui/StarSelector';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 
 interface CreateBrewFormProps {
@@ -208,10 +209,9 @@ export function CreateBrewForm({
         {(field) => (
           <Field>
             <FieldLabel htmlFor="brewTasteScore">Taste Score *</FieldLabel>
-            <NumberCarousel
-              value={field.state.value}
+            <StarSelector
+              value={field.state.value ?? 0}
               onChange={field.handleChange}
-              max={10}
             />
             {field.state.meta.errors.length > 0 &&
               field.state.meta.isTouched && (
