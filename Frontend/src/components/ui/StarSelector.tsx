@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import { StarIcon } from 'lucide-react';
+import { StarIcon, CircleOffIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StarSelectorProps {
@@ -21,8 +21,8 @@ export function StarSelector({
     if (!containerRef.current) return 0;
     const rect = containerRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
-    const starWidth = rect.width / 5;
-    const rating = Math.min(5, Math.max(0, Math.ceil(x / starWidth)));
+    const starWidth = rect.width / 6;
+    const rating = Math.min(5, Math.max(0, Math.floor(x / starWidth)));
     return rating;
   }, []);
 
@@ -54,37 +54,14 @@ export function StarSelector({
     isDragging.current = false;
   }, []);
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      isDragging.current = true;
-      const rating = getRatingFromPosition(e.clientX);
+  const handleClick = useCallback(
+    (rating: number) => {
       if (rating !== value) {
         onChange(rating);
       }
     },
-    [value, onChange, getRatingFromPosition],
+    [value, onChange],
   );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging.current) return;
-      const rating = getRatingFromPosition(e.clientX);
-      if (rating !== value) {
-        onChange(rating);
-      }
-    },
-    [value, onChange, getRatingFromPosition],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    isDragging.current = false;
-  }, []);
-
-  const handleClick = (rating: number) => {
-    if (rating !== value) {
-      onChange(rating);
-    }
-  };
 
   return (
     <div
@@ -96,14 +73,25 @@ export function StarSelector({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
+      <button
+        type="button"
+        onClick={() => handleClick(0)}
+        onMouseEnter={() => setHoverValue(0)}
+        onMouseLeave={() => setHoverValue(0)}
+        className="p-2 cursor-pointer transition-colors hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
+        aria-label="Rate 0"
+      >
+        <CircleOffIcon
+          className={cn(
+            'size-8 md:size-10 transition-colors',
+            'text-muted hover:text-muted-foreground',
+          )}
+        />
+      </button>
       {Array.from({ length: 5 }, (_, i) => {
         const rating = i + 1;
-        const isFilled = rating <= (hoverValue || value);
+        const isFilled = rating <= (hoverValue > 0 ? hoverValue : value);
         return (
           <button
             key={rating}
