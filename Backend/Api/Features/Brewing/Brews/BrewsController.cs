@@ -50,30 +50,7 @@ namespace Api.Features.Brewing.Brews
         .Include(b => b.User)
         .ToListAsync();
 
-      var brewDtos = brews.Select(b => new BrewResponse
-      {
-        Id = b.Id,
-        CoffeeBagId = b.CoffeeBagId,
-        CoffeeBag = new CoffeeBagResponse
-        {
-          Id = b.CoffeeBag.Id,
-          UserId = b.CoffeeBag.UserId,
-          Roaster = b.CoffeeBag.Roaster,
-          Origin = b.CoffeeBag.Origin,
-          RoastStyle = b.CoffeeBag.RoastStyle,
-          FlavourNotes = b.CoffeeBag.FlavourNotes,
-          Opened = b.CoffeeBag.Opened,
-          Emptied = b.CoffeeBag.Emptied,
-        },
-        BrewType = b.BrewType ?? "",
-        CoffeeDose = b.CoffeeDose ?? 0,
-        GrindSize = b.GrindSize ?? 0,
-        BrewTime = b.BrewTime ?? 0,
-        BrewWeight = b.BrewWeight ?? 0,
-        BrewTasteScore = b.BrewTasteScore ?? 0,
-        Notes = b.Notes,
-        BrewedOn = b.CreatedOn ?? DateTime.UtcNow,
-      }).OrderByDescending(b => b.BrewedOn) .ToList();
+      var brewDtos = brews.Select(b => b.ToBrewResponse()).OrderByDescending(b => b.BrewedOn) .ToList();
 
       return Ok(brewDtos);
     }
@@ -109,19 +86,7 @@ namespace Api.Features.Brewing.Brews
         return Unauthorized();
       }
 
-      var brew = new BrewEntity
-      {
-        UserId = userId.Value,
-        CoffeeBagId = request.CoffeeBagId,
-        BrewType = request.BrewType,
-        CoffeeDose = request.CoffeeDose,
-        GrindSize = request.GrindSize,
-        BrewTime = request.BrewTime,
-        BrewWeight = request.BrewWeight,
-        BrewTasteScore = request.BrewTasteScore,
-        Notes = request.Notes,
-      };
-
+      var brew = request.ToBrew(userId.Value);
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();
 
@@ -169,15 +134,30 @@ namespace Api.Features.Brewing.Brews
     /// Update a brew for current user.
     /// </summary>
     /// <param name="id">The brew ID.</param>
-    /// <param name="brew">The updated brew data.</param>
+    /// <param name="request">The updated brew data.</param>
+    /// <param name="validator">The validator for the request.</param>
     /// <returns>The updated brew.</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(BrewEntity), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BrewResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateBrew(int id, [FromBody] BrewEntity brew)
+    public async Task<IActionResult> UpdateBrew(
+        int id,
+        [FromBody] UpdateBrewRequest request,
+        [FromServices] UpdateBrewRequestValidator validator)
     {
+      var validationResult = await validator.ValidateAsync(request);
+      if (!validationResult.IsValid)
+      {
+        var modelState = new ModelStateDictionary();
+        foreach (var error in validationResult.Errors)
+        {
+          modelState.AddModelError(error.PropertyName, error.ErrorMessage);
+        }
+        return ValidationProblem(modelState);
+      }
+
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
       {
@@ -193,11 +173,10 @@ namespace Api.Features.Brewing.Brews
         return NotFound();
       }
 
-      // Ensure the coffee bag belongs to the user if it's being changed
-      if (brew.CoffeeBagId != existingBrew.CoffeeBagId)
+      if (request.CoffeeBagId.HasValue && request.CoffeeBagId != existingBrew.CoffeeBagId)
       {
         var coffeeBag = await _dbContext.CoffeeBags
-          .FirstOrDefaultAsync(cb => cb.Id == brew.CoffeeBagId && cb.UserId == userId.Value);
+          .FirstOrDefaultAsync(cb => cb.Id == request.CoffeeBagId && cb.UserId == userId.Value);
 
         if (coffeeBag == null)
         {
@@ -205,18 +184,15 @@ namespace Api.Features.Brewing.Brews
         }
       }
 
-      existingBrew.BrewType = brew.BrewType;
-      existingBrew.CoffeeDose = brew.CoffeeDose;
-      existingBrew.GrindSize = brew.GrindSize;
-      existingBrew.BrewTime = brew.BrewTime;
-      existingBrew.BrewWeight = brew.BrewWeight;
-      existingBrew.BrewTasteScore = brew.BrewTasteScore;
-      existingBrew.Notes = brew.Notes;
-      existingBrew.CoffeeBagId = brew.CoffeeBagId;
+      existingBrew.UpdateBrew(request);
 
       await _dbContext.SaveChangesAsync();
 
-      return Ok(existingBrew);
+      var updatedBrew = await _dbContext.Brews
+        .Include(b => b.CoffeeBag)
+        .FirstAsync(b => b.Id == id);
+
+      return Ok(updatedBrew.ToBrewResponse());
     }
 
     /// <summary>
