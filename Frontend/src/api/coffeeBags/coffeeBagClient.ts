@@ -1,5 +1,11 @@
+import z from 'zod';
 import { apiClient } from '../base/apiClient';
-import { CoffeeBag } from './coffeeRequestSchemas';
+import {
+  type CoffeeBagUpdateRequest,
+  type CoffeeBagCreateRequest,
+  type CoffeeBag,
+  CoffeeBagResponseSchema,
+} from './coffeeRequestSchemas';
 
 class CoffeeBagClient {
   getUrl(...args: string[]) {
@@ -7,38 +13,44 @@ class CoffeeBagClient {
   }
 
   async getCoffeeBags() {
-    const res = await apiClient.fetch<Array<CoffeeBag>>(
+    const res = await apiClient.fetch<CoffeeBag[]>(
       'GET',
       this.getUrl(),
       null,
-      null,
+      z.array(CoffeeBagResponseSchema),
     );
     return res;
   }
 
-  async createCoffeeBag(data: {
-    roaster: string;
-    origin: string;
-    roastStyle: string;
-    flavourNotes?: string;
-    opened?: string;
-  }) {
-    const coffeeBagData = {
-      roaster: data.roaster,
-      origin: data.origin,
-      roastStyle: data.roastStyle,
-      flavourNotes: data.flavourNotes || null,
-      opened: data.opened || null,
-    };
-
+  async createCoffeeBag(data: CoffeeBagCreateRequest) {
     const res = await apiClient.fetch<CoffeeBag>(
       'POST',
       this.getUrl(),
-      coffeeBagData,
-      null,
+      data,
+      CoffeeBagResponseSchema,
     );
 
     return res;
+  }
+
+  async updateCoffeeBag(id: number, data: CoffeeBagUpdateRequest) {
+    const res = await apiClient.fetch<CoffeeBag>(
+      'PUT',
+      this.getUrl(id.toString()),
+      data,
+      CoffeeBagResponseSchema,
+    );
+
+    return res;
+  }
+
+  async deleteCoffeeBag(id: number) {
+    await apiClient.fetch<void>(
+      'DELETE',
+      this.getUrl(id.toString()),
+      null,
+      null,
+    );
   }
 }
 

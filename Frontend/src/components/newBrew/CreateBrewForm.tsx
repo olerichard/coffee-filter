@@ -1,5 +1,5 @@
 import { BREW_TYPES, useCreateBrew } from './useCreateBrew';
-import type { CoffeeBag } from '@/api/brews/brewRequestSchemas';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

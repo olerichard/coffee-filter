@@ -1,5 +1,10 @@
+import z from 'zod';
 import { apiClient } from '../base/apiClient';
-import { Brew, BrewRequestSchema } from './brewRequestSchemas';
+import { BrewResponseSchema, type Brew } from './brewRequestSchemas';
+import type {
+  BrewCreateRequest,
+  BrewUpdateRequest,
+} from './brewRequestSchemas';
 
 class BrewClient {
   getUrl(...args: string[]) {
@@ -7,55 +12,55 @@ class BrewClient {
   }
 
   async getBrews() {
-    const res = await apiClient.fetch<Array<Brew>>(
+    const res = await apiClient.fetch<Brew[]>(
       'GET',
       this.getUrl(),
       null,
-      null,
+      z.array(BrewResponseSchema),
     );
     return res;
   }
 
-  async getBrewById(params: { brewId: string }) {
+  async getBrewById(brewId: string) {
     const res = await apiClient.fetch<Brew>(
       'GET',
-      this.getUrl(params.brewId),
+      this.getUrl(brewId),
       null,
-      BrewRequestSchema,
+      BrewResponseSchema,
     );
 
     return res;
   }
 
-  async createBrew(data: {
-    coffeeBagId: number;
-    brewType: string;
-    brewTasteScore: number;
-    coffeeDose: number;
-    grindSize: number;
-    brewTime: number;
-    brewWeight?: number;
-    notes?: string;
-  }) {
-    const brewData = {
-      coffeeBagId: data.coffeeBagId,
-      brewType: data.brewType,
-      brewTasteScore: data.brewTasteScore,
-      coffeeDose: data.coffeeDose,
-      grindSize: data.grindSize,
-      brewTime: data.brewTime,
-      brewWeight: data.brewWeight || null,
-      notes: data.notes || null,
-    };
-
+  async createBrew(data: BrewCreateRequest) {
     const res = await apiClient.fetch<Brew>(
       'POST',
       this.getUrl(),
-      brewData,
-      null,
+      data,
+      BrewResponseSchema,
     );
 
     return res;
+  }
+
+  async updateBrew(id: number, data: BrewUpdateRequest) {
+    const res = await apiClient.fetch<Brew>(
+      'PUT',
+      this.getUrl(id.toString()),
+      data,
+      BrewResponseSchema,
+    );
+
+    return res;
+  }
+
+  async deleteBrew(id: number) {
+    await apiClient.fetch<void>(
+      'DELETE',
+      this.getUrl(id.toString()),
+      null,
+      null,
+    );
   }
 }
 

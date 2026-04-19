@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { CoffeeBagCreateRequestSchema } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { apiClients } from '@/api/apiClients';
 
 export const ROAST_STYLES = [
@@ -12,13 +13,7 @@ export const ROAST_STYLES = [
   'Dark',
 ] as const;
 
-export const CoffeeBagFormSchema = z.object({
-  roaster: z.string().min(1, 'Roaster is required').max(100),
-  origin: z.string().min(1, 'Origin is required').max(100),
-  roastStyle: z.string().min(1, 'Roast style is required'),
-  flavourNotes: z.string().max(500).optional(),
-  opened: z.string().optional(),
-});
+export const CoffeeBagFormSchema = CoffeeBagCreateRequestSchema;
 
 export type CoffeeBagFormValues = z.infer<typeof CoffeeBagFormSchema>;
 
@@ -49,7 +44,8 @@ export function useCreateCoffeeBag({ onSuccess }: UseCreateCoffeeBagOptions) {
   });
 
   const createCoffeeBagMutation = useMutation({
-    mutationFn: (data: CoffeeBagFormValues) => apiClients.coffeeBag.createCoffeeBag(data),
+    mutationFn: (data: CoffeeBagFormValues) =>
+      apiClients.coffeeBag.createCoffeeBag(data),
     onSuccess: async (newCoffeeBag) => {
       await queryClient.setQueryData(
         ['coffeeBags'],

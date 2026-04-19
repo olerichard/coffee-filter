@@ -2,20 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
+import { BrewCreateRequestSchema } from '@/api/brews/brewRequestSchemas';
 import { apiClients } from '@/api/apiClients';
 
 export const BREW_TYPES = ['Espresso'] as const;
 
-export const BrewFormSchema = z.object({
-  coffeeBagId: z.number().min(1, 'Coffee bag is required'),
-  brewType: z.string().min(1, 'Brew type is required'),
-  brewTasteScore: z.number().max(5),
-  coffeeDose: z.number().positive('Dose is required'),
-  grindSize: z.number().positive('Grind size is required'),
-  brewTime: z.number().positive('Brew time is required'),
-  brewWeight: z.number().positive('Brew weight is required'),
-  notes: z.string().optional(),
-});
+export const BrewFormSchema = BrewCreateRequestSchema;
 
 export type BrewFormValues = z.infer<typeof BrewFormSchema>;
 

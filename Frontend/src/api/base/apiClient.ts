@@ -23,7 +23,7 @@ class ApiClient {
   }
 
   async fetch<T extends unknown>(
-    method: 'PUT' | 'POST' | 'GET',
+    method: 'PUT' | 'POST' | 'GET' | 'DELETE',
     url: string,
     body: Record<string, unknown> | null,
     schema: ZodType | null,
