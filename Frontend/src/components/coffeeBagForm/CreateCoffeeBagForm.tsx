@@ -1,4 +1,7 @@
-import { ROAST_STYLES, useCreateCoffeeBag } from '@/components/coffeeBag/useCreateCoffeeBag';
+import {
+  ROAST_STYLES,
+  useCreateCoffeeBag,
+} from '@/components/coffeeBagForm/useCreateCoffeeBag';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -36,7 +39,8 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
               <FieldLabel htmlFor="roaster">Roaster *</FieldLabel>
               <Input
                 aria-invalid={
-                  field.state.meta.errors.length > 0 && field.state.meta.isTouched
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
                 }
                 id="roaster"
                 value={field.state.value || ''}
@@ -60,7 +64,8 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
               <FieldLabel htmlFor="origin">Origin *</FieldLabel>
               <Input
                 aria-invalid={
-                  field.state.meta.errors.length > 0 && field.state.meta.isTouched
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
                 }
                 id="origin"
                 value={field.state.value || ''}

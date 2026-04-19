@@ -19,6 +19,7 @@ export function PreviousBrews() {
   }
 
   if (query.isError) {
+    console.log('error', query.error);
     return (
       <div className="flex justify-center py-8">
         <span className="text-destructive">Failed to load brews</span>

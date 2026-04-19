@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiClients } from '@/api/apiClients';
 import { CreateBrewForm } from './CreateBrewForm';
-import { CreateCoffeeBagForm } from '@/components/coffeeBag/CreateCoffeeBagForm';
+import { CreateCoffeeBagForm } from '@/components/coffeeBagForm/CreateCoffeeBagForm';
 
 export function NewBrewCard() {
   const [isBrewOpen, setIsBrewOpen] = useState(false);
@@ -25,16 +25,10 @@ export function NewBrewCard() {
       <CardContent>
         {!isBrewOpen && !isCoffeeBagOpen && (
           <div className="grid grid-cols-3 gap-4">
-            <Button
-              onClick={() => setIsBrewOpen(true)}
-              className="col-span-2"
-            >
+            <Button onClick={() => setIsBrewOpen(true)} className="col-span-2">
               Start New Brew
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsCoffeeBagOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setIsCoffeeBagOpen(true)}>
               Add Coffee Bag
             </Button>
           </div>
