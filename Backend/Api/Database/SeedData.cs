@@ -109,7 +109,10 @@ namespace Api.Database
             var hour = _random.Next(9, 19);
             var minute = _random.Next(0, 60);
             var second = _random.Next(0, 60);
-            return new DateTime(baseDate.Year, baseDate.Month, baseDate.Day, hour, minute, second);
+            return DateTime.SpecifyKind(
+                new DateTime(baseDate.Year, baseDate.Month, baseDate.Day, hour, minute, second),
+                DateTimeKind.Utc
+            );
         }
     }
 }

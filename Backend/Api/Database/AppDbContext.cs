@@ -11,6 +11,13 @@ namespace Api.Database
     public DbSet<BrewEntity> Brews { get; set; } = null!;
     public DbSet<CoffeeBagEntity> CoffeeBags { get; set; } = null!;
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+      // Enforce UTC for all DateTime properties globally.
+      configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeValueConverter>();
+      configurationBuilder.Properties<DateTime?>().HaveConversion<UtcNullableDateTimeValueConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       base.OnModelCreating(modelBuilder);
