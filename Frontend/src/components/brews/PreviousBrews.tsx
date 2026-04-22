@@ -40,7 +40,7 @@ export function PreviousBrews() {
   }
 
   return (
-    <div className="flex flex-col gap-4 py-1.5 px-4 sm:px-0">
+    <div className="flex flex-col gap-4 py-1.5">
       <div className="flex flex-col gap-3">
         {brews.map((brew) => (
           <BrewCard key={brew.id} brew={brew} />
