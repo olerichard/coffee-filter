@@ -58,6 +58,31 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
           )}
         </form.Field>
 
+        <form.Field name="name">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input
+                aria-invalid={
+                  field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched
+                }
+                id="name"
+                value={field.state.value || ''}
+                onChange={(e) => field.handleChange(e.currentTarget.value)}
+                onBlur={field.handleBlur}
+                placeholder="e.g., Ethiopia Yirgacheffe"
+              />
+              {field.state.meta.errors.length > 0 &&
+                field.state.meta.isTouched && (
+                  <FieldDescription>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldDescription>
+                )}
+            </Field>
+          )}
+        </form.Field>
+
         <form.Field name="origin">
           {(field) => (
             <Field>

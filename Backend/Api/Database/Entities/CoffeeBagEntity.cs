@@ -8,6 +8,7 @@ namespace Api.Database.Entities
     public required int UserId {get;set;}
     public UserEntity User {get;set;} = null!;
     public required string Roaster {get;set;}
+    public string? Name {get;set;}
     public required string Origin {get;set;}
     public required string RoastStyle {get;set;}
     public string? FlavourNotes {get;set;}

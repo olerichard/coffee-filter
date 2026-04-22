@@ -51,12 +51,16 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
   const showEmptyButton = isOpened && !isEmptied;
   const showOpenButton = !isOpened && !isEmptied;
 
+  const roasterDisplay = coffeeBag.name
+    ? `${coffeeBag.roaster} - ${coffeeBag.name}`
+    : coffeeBag.roaster;
+
   return (
     <Card className="overflow-hidden">
       <CardContent className="py-0 px-4">
         <div className="flex flex-col gap-3">
           <div className="min-w-0 flex-1">
-            <p className="font-medium truncate">{coffeeBag.roaster}</p>
+            <p className="font-medium truncate">{roasterDisplay}</p>
             <div className="flex flex-wrap items-center gap-x-1 text-sm text-muted-foreground">
               <span>{coffeeBag.origin}</span>
               {coffeeBag.roastStyle && (

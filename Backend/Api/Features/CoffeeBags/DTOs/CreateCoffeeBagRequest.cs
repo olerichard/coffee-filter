@@ -5,6 +5,7 @@ using FluentValidation;
 public class CreateCoffeeBagRequest
 {
   public required string Roaster { get; set; }
+  public string? Name { get; set; }
   public required string Origin { get; set; }
   public required string RoastStyle { get; set; }
   public string? FlavourNotes { get; set; }
@@ -21,6 +22,11 @@ public class CreateCoffeeBagRequestValidator : AbstractValidator<CreateCoffeeBag
       .WithMessage("Roaster is required")
       .MaximumLength(100)
       .WithMessage("Roaster must not exceed 100 characters");
+
+    RuleFor(x => x.Name)
+      .MaximumLength(100)
+      .When(x => x.Name != null)
+      .WithMessage("Name must not exceed 100 characters");
 
     RuleFor(x => x.Origin)
       .NotEmpty()

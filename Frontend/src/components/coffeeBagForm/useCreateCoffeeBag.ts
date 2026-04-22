@@ -6,11 +6,9 @@ import { CoffeeBagCreateRequestSchema } from '@/api/coffeeBags/coffeeRequestSche
 import { apiClients } from '@/api/apiClients';
 
 export const ROAST_STYLES = [
-  'Light',
-  'Light-Medium',
-  'Medium',
-  'Medium-Dark',
-  'Dark',
+  'Espresso',
+  'Filter',
+  'Omni',
 ] as const;
 
 export const CoffeeBagFormSchema = CoffeeBagCreateRequestSchema;
@@ -23,6 +21,7 @@ interface UseCreateCoffeeBagOptions {
 
 const defaultValues: CoffeeBagFormValues = {
   roaster: '',
+  name: '',
   origin: '',
   roastStyle: '',
   flavourNotes: '',

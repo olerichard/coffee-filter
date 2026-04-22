@@ -12,6 +12,7 @@ public static class CoffeeBagEntityExtensions
       Id = entity.Id,
       UserId = entity.UserId,
       Roaster = entity.Roaster,
+      Name = entity.Name,
       Origin = entity.Origin,
       RoastStyle = entity.RoastStyle,
       FlavourNotes = entity.FlavourNotes,
@@ -26,6 +27,7 @@ public static class CoffeeBagEntityExtensions
     {
       UserId = userId,
       Roaster = request.Roaster,
+      Name = request.Name,
       Origin = request.Origin,
       RoastStyle = request.RoastStyle,
       FlavourNotes = request.FlavourNotes,
@@ -38,6 +40,8 @@ public static class CoffeeBagEntityExtensions
   {
     if (request.Roaster is not null)
       entity.Roaster = request.Roaster;
+    if (request.Name is not null)
+      entity.Name = request.Name;
     if (request.Origin is not null)
       entity.Origin = request.Origin;
     if (request.RoastStyle is not null)
