@@ -4,10 +4,12 @@ import { Button } from '../ui/button';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { useUpdateCoffeeBag } from '@/components/coffeeBagForm/useUpdateCoffeeBag';
 
+type ConfirmAction = 'open' | 'empty';
+
 export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { mutate: markEmpty, isLoading } = useUpdateCoffeeBag({});
+  const { mutate: updateBag, isLoading } = useUpdateCoffeeBag({});
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -18,18 +20,22 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
     });
   };
 
-  const handleClick = () => {
-    if (!isConfirming) {
-      setIsConfirming(true);
+  const handleClick = (action: ConfirmAction) => {
+    if (confirmAction !== action) {
+      setConfirmAction(action);
       timeoutRef.current = setTimeout(() => {
-        setIsConfirming(false);
+        setConfirmAction(null);
       }, 5000);
     } else {
-      markEmpty(
-        { id: coffeeBag.id, data: { emptied: new Date().toISOString() } },
+      const data = action === 'empty'
+        ? { emptied: new Date().toISOString() }
+        : { opened: new Date().toISOString() };
+
+      updateBag(
+        { id: coffeeBag.id, data },
         {
           onSuccess: () => {
-            setIsConfirming(false);
+            setConfirmAction(null);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           },
         },
@@ -39,6 +45,11 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
 
   const opened = formatDate(coffeeBag.opened ?? '');
   const emptied = formatDate(coffeeBag.emptied ?? '');
+  const isOpened = !!coffeeBag.opened;
+  const isEmptied = !!coffeeBag.emptied;
+
+  const showEmptyButton = isOpened && !isEmptied;
+  const showOpenButton = !isOpened && !isEmptied;
 
   return (
     <Card className="overflow-hidden">
@@ -74,15 +85,27 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
               {emptied && <span>Emptied: {emptied}</span>}
             </div>
 
-            {!emptied && (
+            {showOpenButton && (
               <Button
-                variant={isConfirming ? 'default' : 'ghost'}
+                variant={confirmAction === 'open' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={handleClick}
+                onClick={() => handleClick('open')}
                 disabled={isLoading}
                 className="w-fit"
               >
-                {isConfirming ? 'yes, it is' : 'Empty?'}
+                {confirmAction === 'open' ? 'Yes, please' : 'Open ?'}
+              </Button>
+            )}
+
+            {showEmptyButton && (
+              <Button
+                variant={confirmAction === 'empty' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleClick('empty')}
+                disabled={isLoading}
+                className="w-fit"
+              >
+                {confirmAction === 'empty' ? 'yes, it is' : 'Empty ?'}
               </Button>
             )}
           </div>

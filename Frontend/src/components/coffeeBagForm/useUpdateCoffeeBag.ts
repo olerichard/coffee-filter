@@ -19,7 +19,12 @@ export function useUpdateCoffeeBag({ onSuccess }: UseUpdateCoffeeBagOptions = {}
     }) => apiClients.coffeeBag.updateCoffeeBag(id, data),
     onSuccess: async (updatedCoffeeBag, { id }) => {
       await queryClient.setQueryData(
-        ['coffeeBags'],
+        ['coffeeBags', false],
+        (old: Array<CoffeeBag> | undefined) =>
+          old?.map((bag) => (bag.id === id ? updatedCoffeeBag : bag)),
+      );
+      await queryClient.setQueryData(
+        ['coffeeBags', true],
         (old: Array<CoffeeBag> | undefined) =>
           old?.map((bag) => (bag.id === id ? updatedCoffeeBag : bag)),
       );

@@ -30,12 +30,13 @@ public class CoffeeBagsController : BaseController
   /// <summary>
   /// Get all Coffee Bags for current user.
   /// </summary>
+  /// <param name="includeEmpty">Whether to include emptied bags. Default false.</param>
   /// <returns>An array of user's coffee bags.</returns>
   [HttpGet]
   [ProducesResponseType(typeof(IEnumerable<CoffeeBagResponse>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> GetAllCoffeeBags()
+  public async Task<IActionResult> GetAllCoffeeBags([FromQuery] bool includeEmpty = false)
   {
     var userId = _currentUserService.GetCurrentUserId();
     if (!userId.HasValue)
@@ -43,8 +44,15 @@ public class CoffeeBagsController : BaseController
       return Unauthorized();
     }
 
-    var coffeeBags = await _dbContext.CoffeeBags
-      .Where(cb => cb.UserId == userId.Value)
+    var query = _dbContext.CoffeeBags
+      .Where(cb => cb.UserId == userId.Value);
+
+    if (!includeEmpty)
+    {
+      query = query.Where(cb => cb.Emptied == null);
+    }
+
+    var coffeeBags = await query
       .Include(cb => cb.Brews)
       .ToListAsync();
 

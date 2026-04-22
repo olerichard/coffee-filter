@@ -2,10 +2,14 @@ import { apiClients } from '@/api/apiClients';
 import { useQuery } from '@tanstack/react-query';
 import { CoffeeBagCard } from './CoffeeBagCard';
 
-export const CoffeeBagList = () => {
+interface CoffeeBagListProps {
+  showEmpty?: boolean;
+}
+
+export const CoffeeBagList = ({ showEmpty = false }: CoffeeBagListProps) => {
   const query = useQuery({
-    queryKey: ['coffeeBags'],
-    queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
+    queryKey: ['coffeeBags', showEmpty],
+    queryFn: () => apiClients.coffeeBag.getCoffeeBags(showEmpty),
   });
 
   if (query.isLoading) {

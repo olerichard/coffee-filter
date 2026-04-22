@@ -12,10 +12,11 @@ class CoffeeBagClient {
     return apiClient.buildUrl('CoffeeBags', ...args);
   }
 
-  async getCoffeeBags() {
+  async getCoffeeBags(includeEmpty = false) {
+    const params = includeEmpty ? '?includeEmpty=true' : '';
     const res = await apiClient.fetch<CoffeeBag[]>(
       'GET',
-      this.getUrl(),
+      this.getUrl(params),
       null,
       z.array(CoffeeBagResponseSchema),
     );
