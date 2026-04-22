@@ -36,11 +36,17 @@ public static class CoffeeBagEntityExtensions
 
   public static void UpdateCoffeeBagEntity(this CoffeeBagEntity entity, UpdateCoffeeBagRequest request)
   {
-    entity.Roaster = request.Roaster;
-    entity.Origin = request.Origin;
-    entity.RoastStyle = request.RoastStyle;
-    entity.FlavourNotes = request.FlavourNotes;
-    entity.Opened = request.Opened;
-    entity.Emptied = request.Emptied;
+    if (request.Roaster is not null)
+      entity.Roaster = request.Roaster;
+    if (request.Origin is not null)
+      entity.Origin = request.Origin;
+    if (request.RoastStyle is not null)
+      entity.RoastStyle = request.RoastStyle;
+    if (request.FlavourNotes is not null)
+      entity.FlavourNotes = request.FlavourNotes;
+    if (request.Opened is not null)
+      entity.Opened = request.Opened;
+    if (request.Emptied is not null)
+      entity.Emptied = request.Emptied;
   }
 }

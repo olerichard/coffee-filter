@@ -32,7 +32,6 @@ export function PreviousBrews() {
   if (brews.length === 0) {
     return (
       <div className="flex flex-col gap-4 py-8">
-        <h2 className="text-xl font-semibold">Previous Brews</h2>
         <p className="text-muted-foreground text-sm">
           No brews yet. Start your first brew!
         </p>
@@ -42,7 +41,6 @@ export function PreviousBrews() {
 
   return (
     <div className="flex flex-col gap-4 py-1.5 px-4 sm:px-0">
-      <h2 className="text-xl font-semibold">Previous Brews</h2>
       <div className="flex flex-col gap-3">
         {brews.map((brew) => (
           <BrewCard key={brew.id} brew={brew} />

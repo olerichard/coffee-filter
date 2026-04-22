@@ -1,7 +1,14 @@
-import { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { useRef, useState } from 'react';
 import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { useUpdateCoffeeBag } from '@/components/coffeeBagForm/useUpdateCoffeeBag';
 
 export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { mutate: markEmpty, isLoading } = useUpdateCoffeeBag({});
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -9,6 +16,25 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const handleClick = () => {
+    if (!isConfirming) {
+      setIsConfirming(true);
+      timeoutRef.current = setTimeout(() => {
+        setIsConfirming(false);
+      }, 5000);
+    } else {
+      markEmpty(
+        { id: coffeeBag.id, data: { emptied: new Date().toISOString() } },
+        {
+          onSuccess: () => {
+            setIsConfirming(false);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          },
+        },
+      );
+    }
   };
 
   const opened = formatDate(coffeeBag.opened ?? '');
@@ -37,14 +63,28 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            {opened && (
-              <>
-                <span>Opened: {opened}</span>
-                <span className="text-muted-foreground">·</span>
-              </>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
+            <div className="flex flex-wrap items-center gap-x-1">
+              {opened && (
+                <>
+                  <span>Opened: {opened}</span>
+                  <span className="text-muted-foreground">·</span>
+                </>
+              )}
+              {emptied && <span>Emptied: {emptied}</span>}
+            </div>
+
+            {!emptied && (
+              <Button
+                variant={isConfirming ? 'default' : 'ghost'}
+                size="sm"
+                onClick={handleClick}
+                disabled={isLoading}
+                className="w-fit"
+              >
+                {isConfirming ? 'yes, it is' : 'Empty?'}
+              </Button>
             )}
-            {emptied && <span>Emptied: {emptied}</span>}
           </div>
         </div>
       </CardContent>
