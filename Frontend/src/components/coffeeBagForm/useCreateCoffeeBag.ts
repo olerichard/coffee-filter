@@ -43,8 +43,13 @@ export function useCreateCoffeeBag({ onSuccess }: UseCreateCoffeeBagOptions) {
   });
 
   const createCoffeeBagMutation = useMutation({
-    mutationFn: (data: CoffeeBagFormValues) =>
-      apiClients.coffeeBag.createCoffeeBag(data),
+    mutationFn: (data: CoffeeBagFormValues) => {
+      const formattedData = {
+        ...data,
+        opened: data.opened ? new Date(data.opened + 'T00:00:00.000Z').toISOString() : undefined,
+      };
+      return apiClients.coffeeBag.createCoffeeBag(formattedData);
+    },
     onSuccess: async (newCoffeeBag) => {
       await queryClient.setQueryData(
         ['coffeeBags'],

@@ -27,9 +27,11 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
         setConfirmAction(null);
       }, 5000);
     } else {
+      const now = new Date();
+      const midnightUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)).toISOString();
       const data = action === 'empty'
-        ? { emptied: new Date().toISOString() }
-        : { opened: new Date().toISOString() };
+        ? { emptied: now.toISOString() }
+        : { opened: midnightUtc };
 
       updateBag(
         { id: coffeeBag.id, data },
