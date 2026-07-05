@@ -46,11 +46,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
-  return (
-    <BaseLayout>
-      <Outlet />
-    </BaseLayout>
-  );
+  return <Outlet />;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -61,7 +57,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
-          <Authorization>{children}</Authorization>
+          <BaseLayout>
+            <Authorization>{children}</Authorization>
+          </BaseLayout>
         </ThemeProvider>
         <TanStackDevtools
           config={{
