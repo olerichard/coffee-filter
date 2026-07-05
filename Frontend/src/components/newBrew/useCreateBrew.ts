@@ -4,31 +4,38 @@ import { z } from 'zod';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { BrewCreateRequestSchema } from '@/api/brews/brewRequestSchemas';
 import { apiClients } from '@/api/apiClients';
+import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
 
-export const BrewFormSchema = BrewCreateRequestSchema;
+const BrewFormSchema = BrewCreateRequestSchema;
 
-export type BrewFormValues = z.infer<typeof BrewFormSchema>;
+type BrewFormValues = z.infer<typeof BrewFormSchema>;
+
+export function getDefaultValues(method: BrewMethod): BrewFormValues {
+  return {
+    coffeeBagId: 0,
+    brewMethodId: method.id,
+    brewTasteScore: 0,
+    coffeeDose: method.dose.default,
+    grindSize: method.grindSize.default,
+    brewTime: method.brewTime.default,
+    brewWeight: method.brewWeight.default,
+    notes: '',
+  };
+}
 
 interface UseCreateBrewOptions {
+  initialSelectedMethod: BrewMethod;
   onSuccess: () => void;
 }
 
-const defaultValues: BrewFormValues = {
-  coffeeBagId: 0,
-  brewMethodId: 0,
-  brewTasteScore: 0,
-  coffeeDose: 0,
-  grindSize: 0,
-  brewTime: 0,
-  brewWeight: 0,
-  notes: '',
-};
-
-export function useCreateBrew({ onSuccess }: UseCreateBrewOptions) {
+export function useCreateBrew({
+  initialSelectedMethod,
+  onSuccess,
+}: UseCreateBrewOptions) {
   const queryClient = useQueryClient();
 
   const form = useForm({
-    defaultValues: defaultValues,
+    defaultValues: getDefaultValues(initialSelectedMethod),
     validators: {
       onChange: BrewFormSchema,
       onSubmit: BrewFormSchema,

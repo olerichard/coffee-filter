@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { useCreateBrew } from './useCreateBrew';
+import { useMemo } from 'react';
+import { useCreateBrew, getDefaultValues } from './useCreateBrew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,12 +24,6 @@ interface CreateBrewProps {
 }
 
 export function CreateBrew({ onCancel }: CreateBrewProps) {
-  const { form, isLoading: mutationLoading } = useCreateBrew({
-    onSuccess: () => {
-      onCancel();
-    },
-  });
-
   const brewMethodsQuery = useQuery({
     queryKey: ['brewMethods'],
     queryFn: () => apiClients.brewMethod.getBrewMethods(),
@@ -44,55 +38,53 @@ export function CreateBrew({ onCancel }: CreateBrewProps) {
 
   const coffeeBags = coffeeBagsQuery.data ?? [];
 
-  const selectBrewMethod = (method: BrewMethod) => {
-    form.setFieldValue('brewMethodId', method.id);
-    form.setFieldValue('coffeeDose', method.dose.default);
-    form.setFieldValue('grindSize', method.grindSize.default);
-    form.setFieldValue('brewTime', method.brewTime.default);
-    form.setFieldValue('brewWeight', method.brewWeight.default);
-  };
+  if (brewMethodsQuery.isLoading || coffeeBagsQuery.isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <span className="text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (brewMethods.length > 0 && form.state.values.brewMethodId === 0) {
-      const espresso = brewMethods.find((m) => m.name === 'Espresso');
-      const defaultMethod = espresso ?? brewMethods[0];
-      selectBrewMethod(defaultMethod);
-    }
-  }, [brewMethods]);
+  const initialSelectedMethod =
+    brewMethods.find((m) => m.name === 'Espresso') ?? brewMethods[0];
 
   return (
     <CreateBrewForm
-      form={form}
+      initialSelectedMethod={initialSelectedMethod}
       brewMethods={brewMethods}
       coffeeBags={coffeeBags}
-      selectBrewMethod={selectBrewMethod}
-      isLoading={mutationLoading}
       onCancel={onCancel}
     />
   );
 }
 
 interface CreateBrewFormInnerProps {
-  form: ReturnType<typeof useCreateBrew>['form'];
+  initialSelectedMethod: BrewMethod;
   brewMethods: BrewMethod[];
   coffeeBags: CoffeeBag[];
-  selectBrewMethod: (method: BrewMethod) => void;
-  isLoading: boolean;
   onCancel: () => void;
 }
 
 function CreateBrewForm({
-  form,
+  initialSelectedMethod,
   brewMethods,
   coffeeBags,
-  selectBrewMethod,
-  isLoading,
   onCancel,
 }: CreateBrewFormInnerProps) {
+  const { form, isLoading } = useCreateBrew({
+    initialSelectedMethod,
+    onSuccess: onCancel,
+  });
+
   const selectedMethod = useMemo(
     () => brewMethods.find((m) => m.id === form.state.values.brewMethodId),
     [brewMethods, form.state.values.brewMethodId],
   );
+
+  const selectBrewMethod = (method: BrewMethod) => {
+    form.reset(getDefaultValues(method));
+  };
 
   return (
     <form
