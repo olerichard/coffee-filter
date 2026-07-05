@@ -1,4 +1,4 @@
-namespace Api.Features.Core.Auth
+namespace Api.Core.Auth
 {
   using Microsoft.AspNetCore.Http;
   using System.IdentityModel.Tokens.Jwt;

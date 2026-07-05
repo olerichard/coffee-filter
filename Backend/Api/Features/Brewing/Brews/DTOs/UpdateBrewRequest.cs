@@ -1,7 +1,7 @@
 namespace Api.Features.Brewing.Brews.DTOs
 {
   using Api.Database;
-  using Api.Features.Core.Auth;
+  using Api.Core.Auth;
   using FluentValidation;
   using Microsoft.EntityFrameworkCore;
 

@@ -8,7 +8,7 @@ using Scalar.AspNetCore;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Api.Features.Core.Auth;
+using Api.Core.Auth;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;

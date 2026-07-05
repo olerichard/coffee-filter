@@ -1,19 +1,15 @@
 namespace Api.Features.CoffeeBags;
 
 using Api.Database;
-using Api.Database.Entities;
 using Api.Features.CoffeeBags.DTOs;
-using Api.Features.Core;
-using Api.Features.Core.Auth;
+using Api.Core;
+using Api.Core.Auth;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
+ 
 public class CoffeeBagsController : BaseController
 {
   private readonly AppDbContext _dbContext;

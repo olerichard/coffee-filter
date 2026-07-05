@@ -1,4 +1,4 @@
-namespace Api.Features.Core.Auth
+namespace Api.Core.Auth
 {
   using Api.Database.Entities;
   using Microsoft.IdentityModel.Tokens;

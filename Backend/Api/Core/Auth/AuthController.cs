@@ -1,9 +1,8 @@
-namespace Api.Features.Core.Auth
+namespace Api.Core.Auth
 {
   using Api.Database;
   using Api.Database.Entities;
-  using Api.Features.Core;
-
+  
   using Microsoft.AspNetCore.Identity;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -11,7 +10,8 @@ namespace Api.Features.Core.Auth
 
   [ApiController]
   [Route("api/[controller]")]
-  public class AuthController : BaseController
+  [Produces("application/json")]
+  public class AuthController : Controller
   {
     private readonly AppDbContext _dbContext;
     private readonly IPasswordHasher<UserEntity> _passwordHasher;

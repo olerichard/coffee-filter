@@ -1,7 +1,7 @@
-namespace Api.Features.Core.Users
+namespace Api.Core.Users
 {
   using Api.Database;
-  using Api.Features.Core.Auth;
+  using Api.Core.Auth;
   using Microsoft.AspNetCore.Authorization;
   using Microsoft.AspNetCore.Mvc;
 
