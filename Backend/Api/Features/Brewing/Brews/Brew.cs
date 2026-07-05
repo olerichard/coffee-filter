@@ -1,5 +1,5 @@
 using Api.Database.Entities;
-using Api.Features.Brewing.CoffeeBags;
+using Api.Features.CoffeeBags;
 
 namespace Api.Features.Brewing.Brews
 {

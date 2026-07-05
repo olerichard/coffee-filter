@@ -1,6 +1,6 @@
 using Api.Database.Entities;
 
-namespace Api.Features.Brewing.CoffeeBags
+namespace Api.Features.CoffeeBags
 {
   public class CoffeeBag
   {

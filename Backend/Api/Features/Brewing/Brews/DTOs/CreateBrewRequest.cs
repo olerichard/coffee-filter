@@ -5,7 +5,7 @@ namespace Api.Features.Brewing.Brews.DTOs
   using FluentValidation;
   using Microsoft.EntityFrameworkCore;
 
-  public class CreateBrewRequest
+  public record CreateBrewRequest
   {
     public int CoffeeBagId { get; set; }
     public required string BrewType { get; set; }

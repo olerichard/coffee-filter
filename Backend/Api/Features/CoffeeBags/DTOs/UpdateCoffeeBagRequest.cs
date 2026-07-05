@@ -2,7 +2,7 @@ namespace Api.Features.CoffeeBags.DTOs;
 
 using FluentValidation;
 
-public class UpdateCoffeeBagRequest
+public record UpdateCoffeeBagRequest
 {
   public string? Roaster { get; set; }
   public string? Name { get; set; }

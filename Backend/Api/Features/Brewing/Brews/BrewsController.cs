@@ -2,7 +2,6 @@ namespace Api.Features.Brewing.Brews
 {
   using Api.Database;
   using Api.Features.Brewing.Brews.DTOs;
-  using Api.Features.Brewing.DTOs;
   using Api.Core;
   using Api.Core.Auth;
 
@@ -64,6 +63,12 @@ namespace Api.Features.Brewing.Brews
         [FromBody] CreateBrewRequest request,
         [FromServices] CreateBrewRequestValidator validator)
     {
+       var userId = _currentUserService.GetCurrentUserId();
+      if (!userId.HasValue)
+      {
+        return Unauthorized();
+      }
+
       var validationResult = await validator.ValidateAsync(request);
       if (!validationResult.IsValid)
       {
@@ -75,22 +80,13 @@ namespace Api.Features.Brewing.Brews
         return ValidationProblem(modelState);
       }
 
-      var userId = _currentUserService.GetCurrentUserId();
-      if (!userId.HasValue)
-      {
-        return Unauthorized();
-      }
+     
 
       var brew = request.ToBrew(userId.Value);
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();
 
-      var createdBrew = await _dbContext.Brews
-        .Include(b => b.CoffeeBag)
-        .FirstAsync(b => b.Id == brew.Id);
-
-      var response = createdBrew.ToBrewResponse();
-      return CreatedAtAction(nameof(GetBrewById), new { id = response.Id }, response);
+      return CreatedAtAction(nameof(GetBrewById), new { id = brew.Id }, brew.ToBrewResponse());
     }
 
     /// <summary>
@@ -142,6 +138,12 @@ namespace Api.Features.Brewing.Brews
         [FromBody] UpdateBrewRequest request,
         [FromServices] UpdateBrewRequestValidator validator)
     {
+      var userId = _currentUserService.GetCurrentUserId();
+      if (!userId.HasValue)
+      {
+        return Unauthorized();
+      }
+
       var validationResult = await validator.ValidateAsync(request);
       if (!validationResult.IsValid)
       {
@@ -151,12 +153,6 @@ namespace Api.Features.Brewing.Brews
           modelState.AddModelError(error.PropertyName, error.ErrorMessage);
         }
         return ValidationProblem(modelState);
-      }
-
-      var userId = _currentUserService.GetCurrentUserId();
-      if (!userId.HasValue)
-      {
-        return Unauthorized();
       }
 
       var existingBrew = await _dbContext.Brews
@@ -180,14 +176,9 @@ namespace Api.Features.Brewing.Brews
       }
 
       existingBrew.UpdateBrew(request);
-
       await _dbContext.SaveChangesAsync();
 
-      var updatedBrew = await _dbContext.Brews
-        .Include(b => b.CoffeeBag)
-        .FirstAsync(b => b.Id == id);
-
-      return Ok(updatedBrew.ToBrewResponse());
+      return Ok(existingBrew.ToBrewResponse());
     }
 
     /// <summary>
@@ -213,7 +204,7 @@ namespace Api.Features.Brewing.Brews
 
       if (brew == null)
       {
-        return NotFound();
+        return NoContent();
       }
 
       _dbContext.Brews.Remove(brew);

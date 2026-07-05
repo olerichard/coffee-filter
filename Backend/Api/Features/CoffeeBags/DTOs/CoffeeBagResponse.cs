@@ -1,6 +1,6 @@
 namespace Api.Features.CoffeeBags.DTOs;
 
-public class CoffeeBagResponse
+public record CoffeeBagResponse
 {
   public int Id { get; set; }
   public int UserId { get; set; }

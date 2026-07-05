@@ -53,9 +53,9 @@ public class CoffeeBagsController : BaseController
       .OrderByDescending(cb => cb.LastModifiedOn)
       .ToListAsync();
 
-    var responses = coffeeBags.Select(cb => cb.ToCoffeeBagResponse()).ToList();
+    var response = coffeeBags.Select(cb => cb.ToCoffeeBagResponse()).ToList();
 
-    return Ok(responses);
+    return Ok(response);
   }
 
   /// <summary>
@@ -103,6 +103,12 @@ public class CoffeeBagsController : BaseController
       [FromBody] CreateCoffeeBagRequest request,
       [FromServices] CreateCoffeeBagRequestValidator validator)
   {
+    var userId = _currentUserService.GetCurrentUserId();
+    if (!userId.HasValue)
+    {
+      return Unauthorized();
+    }
+
     var validationResult = await validator.ValidateAsync(request);
     if (!validationResult.IsValid)
     {
@@ -114,21 +120,14 @@ public class CoffeeBagsController : BaseController
       return ValidationProblem(modelState);
     }
 
-    var userId = _currentUserService.GetCurrentUserId();
-    if (!userId.HasValue)
-    {
-      return Unauthorized();
-    }
-
     var coffeeBag = request.ToCoffeeBagEntity(userId.Value);
     _dbContext.CoffeeBags.Add(coffeeBag);
     await _dbContext.SaveChangesAsync();
 
-    var createdCoffeeBag = await _dbContext.CoffeeBags
-      .FirstAsync(cb => cb.Id == coffeeBag.Id);
+    
 
-    var response = createdCoffeeBag.ToCoffeeBagResponse();
-    return CreatedAtAction(nameof(GetCoffeeBagById), new { id = response.Id }, response);
+    
+    return CreatedAtAction(nameof(GetCoffeeBagById), new { id = coffeeBag.Id }, coffeeBag.ToCoffeeBagResponse());
   }
 
   /// <summary>
@@ -148,6 +147,12 @@ public class CoffeeBagsController : BaseController
       [FromBody] UpdateCoffeeBagRequest request,
       [FromServices] UpdateCoffeeBagRequestValidator validator)
   {
+     var userId = _currentUserService.GetCurrentUserId();
+    if (!userId.HasValue)
+    {
+      return Unauthorized();
+    }
+
     var validationResult = await validator.ValidateAsync(request);
     if (!validationResult.IsValid)
     {
@@ -157,12 +162,6 @@ public class CoffeeBagsController : BaseController
         modelState.AddModelError(error.PropertyName, error.ErrorMessage);
       }
       return ValidationProblem(modelState);
-    }
-
-    var userId = _currentUserService.GetCurrentUserId();
-    if (!userId.HasValue)
-    {
-      return Unauthorized();
     }
 
     var existingCoffeeBag = await _dbContext.CoffeeBags
