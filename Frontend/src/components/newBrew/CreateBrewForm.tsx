@@ -1,5 +1,4 @@
 import { BREW_TYPES, useCreateBrew } from './useCreateBrew';
-import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,25 +11,26 @@ import {
 import { NumberCarousel } from '@/components/brews/NumberCarousel';
 import { StarSelector } from '@/components/ui/StarSelector';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { useQuery } from '@tanstack/react-query';
+import { apiClients } from '@/api/apiClients';
 
 interface CreateBrewFormProps {
-  coffeeBags: Array<CoffeeBag>;
-  isLoading: boolean;
   onCancel: () => void;
 }
 
-export function CreateBrewForm({
-  coffeeBags,
-  isLoading: parentLoading,
-  onCancel,
-}: CreateBrewFormProps) {
+export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
   const { form, isLoading: mutationLoading } = useCreateBrew({
     onSuccess: () => {
       onCancel();
     },
   });
 
-  const isLoading = parentLoading || mutationLoading;
+  const coffeeBagsQuery = useQuery({
+    queryKey: ['coffeeBags'],
+    queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
+  });
+
+  const coffeeBags = coffeeBagsQuery.data ?? [];
 
   return (
     <form
@@ -247,8 +247,8 @@ export function CreateBrewForm({
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Brew'}
+        <Button type="submit" disabled={mutationLoading}>
+          {mutationLoading ? 'Saving...' : 'Save Brew'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Hide
