@@ -42,6 +42,7 @@ namespace Api.Features.Brews
         .Where(b => b.UserId == userId.Value)
         .Include(b => b.CoffeeBag)
         .Include(b => b.User)
+        .Include(b => b.BrewMethod)
         .ToListAsync();
 
       var brewDtos = brews.Select(b => b.ToBrewResponse()).OrderByDescending(b => b.BrewedOn) .ToList();
@@ -111,6 +112,7 @@ namespace Api.Features.Brews
         .Where(b => b.Id == id && b.UserId == userId.Value)
         .Include(b => b.CoffeeBag)
         .Include(b => b.User)
+        .Include(b => b.BrewMethod)
         .FirstOrDefaultAsync();
 
       if (brew == null)

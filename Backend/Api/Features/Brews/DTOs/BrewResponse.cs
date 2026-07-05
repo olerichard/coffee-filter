@@ -17,7 +17,8 @@ public record BrewResponse
   public int Id { get; set; }
   public int CoffeeBagId { get; set; }
   public CoffeeBagResponse CoffeeBag { get; set; } = null!;
-  public string BrewType { get; set; } = "";
+  public int BrewMethodId { get; set; }
+  public string BrewMethodName { get; set; } = "";
   public double CoffeeDose { get; set; }
   public double GrindSize { get; set; }
   public int BrewTime { get; set; }

@@ -52,6 +52,13 @@ namespace Api.Database
         .WithMany(cb => cb.Brews)
         .HasForeignKey(b => b.CoffeeBagId)
         .OnDelete(DeleteBehavior.Cascade);
+
+      // Configure Brew -> BrewMethod relationship
+      modelBuilder.Entity<BrewEntity>()
+        .HasOne(b => b.BrewMethod)
+        .WithMany()
+        .HasForeignKey(b => b.BrewMethodId)
+        .OnDelete(DeleteBehavior.Restrict);
     }
   }
 }

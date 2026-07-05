@@ -8,7 +8,7 @@ namespace Api.Features.Brews.DTOs
   public record UpdateBrewRequest
   {
     public int? CoffeeBagId { get; set; }
-    public string? BrewType { get; set; }
+    public int? BrewMethodId { get; set; }
     public int? BrewTasteScore { get; set; }
     public double? CoffeeDose { get; set; }
     public double? GrindSize { get; set; }
@@ -40,13 +40,14 @@ namespace Api.Features.Brews.DTOs
         .When(x => x.CoffeeBagId.HasValue)
         .WithMessage("CoffeeBag not found or access denied");
 
-      RuleFor(x => x.BrewType)
-        .NotEmpty()
-        .When(x => x.BrewType != null)
-        .WithMessage("BrewType is required")
-        .MaximumLength(50)
-        .When(x => x.BrewType != null)
-        .WithMessage("BrewType must not exceed 50 characters");
+      RuleFor(x => x.BrewMethodId)
+        .MustAsync(async (id, ct) =>
+        {
+          if (!id.HasValue) return true;
+          return await _dbContext.BrewMethods.AnyAsync(m => m.Id == id.Value, ct);
+        })
+        .When(x => x.BrewMethodId.HasValue)
+        .WithMessage("BrewMethod not found");
 
       RuleFor(x => x.BrewTasteScore)
         .InclusiveBetween(0, 10)

@@ -8,7 +8,7 @@ namespace Api.Features.Brews.DTOs
   public record CreateBrewRequest
   {
     public int CoffeeBagId { get; set; }
-    public required string BrewType { get; set; }
+    public required int BrewMethodId { get; set; }
     public int BrewTasteScore { get; set; }
     public double CoffeeDose { get; set; }
     public double GrindSize { get; set; }
@@ -33,11 +33,9 @@ namespace Api.Features.Brews.DTOs
         .MustAsync(CoffeeBagExistsAndOwnedByUser)
         .WithMessage("CoffeeBag not found or access denied");
 
-      RuleFor(x => x.BrewType)
-        .NotEmpty()
-        .WithMessage("BrewType is required")
-        .MaximumLength(50)
-        .WithMessage("BrewType must not exceed 50 characters");
+      RuleFor(x => x.BrewMethodId)
+        .MustAsync(BrewMethodExists)
+        .WithMessage("BrewMethod not found");
 
       RuleFor(x => x.BrewTasteScore)
         .InclusiveBetween(0, 10)
@@ -74,6 +72,11 @@ namespace Api.Features.Brews.DTOs
 
       return await _dbContext.CoffeeBags
         .AnyAsync(cb => cb.Id == coffeeBagId && cb.UserId == userId.Value, cancellationToken);
+    }
+
+    private async Task<bool> BrewMethodExists(int brewMethodId, CancellationToken cancellationToken)
+    {
+      return await _dbContext.BrewMethods.AnyAsync(m => m.Id == brewMethodId, cancellationToken);
     }
   }
 }

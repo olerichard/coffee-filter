@@ -8,7 +8,8 @@ namespace Api.Features.Brews
     public int Id { get; init; }
     public User User { get; init; }
     public CoffeeBag CoffeeBag { get; init; }
-    public string BrewType { get; init; }
+    public int BrewMethodId { get; init; }
+    public string BrewMethodName { get; init; }
     public double? CoffeeDose { get; init; }
     public double? GrindSize { get; init; }
     public int? BrewTime { get; init; }
@@ -22,11 +23,14 @@ namespace Api.Features.Brews
         throw new ArgumentException("BrewEntity.User must be loaded");
       if (brewEntity.CoffeeBag == null)
         throw new ArgumentException("BrewEntity.CoffeeBag must be loaded");
+      if (brewEntity.BrewMethod == null)
+        throw new ArgumentException("BrewEntity.BrewMethod must be loaded");
       
       Id = brewEntity.Id;
       User = new User(brewEntity.User);
       CoffeeBag = new CoffeeBag(brewEntity.CoffeeBag);
-      BrewType = brewEntity.BrewType;
+      BrewMethodId = brewEntity.BrewMethodId;
+      BrewMethodName = brewEntity.BrewMethod.Name;
       CoffeeDose = brewEntity.CoffeeDose;
       GrindSize = brewEntity.GrindSize;
       BrewTime = brewEntity.BrewTime;

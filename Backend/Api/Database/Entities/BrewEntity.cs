@@ -9,7 +9,8 @@ namespace Api.Database.Entities
     public UserEntity User {get;set;} = null!;
     public required int CoffeeBagId {get;set;}
     public CoffeeBagEntity CoffeeBag {get;set;} = null!;
-    public required string BrewType {get;set;}
+    public required int BrewMethodId {get;set;}
+    public BrewMethodEntity BrewMethod {get;set;} = null!;
     public double? CoffeeDose {get;set;}
     public double? GrindSize {get;set;}
     public int? BrewTime {get;set;}

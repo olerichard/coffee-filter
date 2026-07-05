@@ -22,7 +22,8 @@ public static class BrewEntityExtensions
         Opened = brew.CoffeeBag.Opened,
         Emptied = brew.CoffeeBag.Emptied,
       },
-      BrewType = brew.BrewType ?? "",
+      BrewMethodId = brew.BrewMethodId,
+      BrewMethodName = brew.BrewMethod.Name,
       CoffeeDose = brew.CoffeeDose ?? 0,
       GrindSize = brew.GrindSize ?? 0,
       BrewTime = brew.BrewTime ?? 0,
@@ -39,7 +40,7 @@ public static class BrewEntityExtensions
       {
         UserId = userId,
         CoffeeBagId = createBrewRequest.CoffeeBagId,
-        BrewType = createBrewRequest.BrewType,
+        BrewMethodId = createBrewRequest.BrewMethodId,
         CoffeeDose = createBrewRequest.CoffeeDose,
         GrindSize = createBrewRequest.GrindSize,
         BrewTime = createBrewRequest.BrewTime,
@@ -53,8 +54,8 @@ public static class BrewEntityExtensions
   {
     if (request.CoffeeBagId.HasValue)
       brew.CoffeeBagId = request.CoffeeBagId.Value;
-    if (request.BrewType != null)
-      brew.BrewType = request.BrewType;
+    if (request.BrewMethodId.HasValue)
+      brew.BrewMethodId = request.BrewMethodId.Value;
     if (request.CoffeeDose.HasValue)
       brew.CoffeeDose = request.CoffeeDose.Value;
     if (request.GrindSize.HasValue)
