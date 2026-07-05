@@ -10,6 +10,7 @@ namespace Api.Database
     public DbSet<UserEntity> Users { get; set; } = null!;
     public DbSet<BrewEntity> Brews { get; set; } = null!;
     public DbSet<CoffeeBagEntity> CoffeeBags { get; set; } = null!;
+    public DbSet<BrewMethodEntity> BrewMethods { get; set; } = null!;
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
