@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CreateBrewForm } from './CreateBrewForm';
+import { CreateBrew } from './CreateBrew';
 import { CreateCoffeeBagForm } from '@/components/coffeeBagForm/CreateCoffeeBagForm';
 
 type OpenState = 'none' | 'bag' | 'brew';
@@ -30,7 +30,7 @@ export const NewBrewCard = () => {
             open === 'brew' ? 'max-h-250 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          <CreateBrewForm onCancel={() => setOpen('none')} />
+          <CreateBrew onCancel={() => setOpen('none')} />
         </div>
         <div
           className={`transition-all duration-300 ease-in-out overflow-hidden ${

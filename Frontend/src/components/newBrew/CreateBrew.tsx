@@ -15,14 +15,15 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { useQuery } from '@tanstack/react-query';
 import { apiClients } from '@/api/apiClients';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 
 const NO_MAX = 999;
 
-interface CreateBrewFormProps {
+interface CreateBrewProps {
   onCancel: () => void;
 }
 
-export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
+export function CreateBrew({ onCancel }: CreateBrewProps) {
   const { form, isLoading: mutationLoading } = useCreateBrew({
     onSuccess: () => {
       onCancel();
@@ -43,11 +44,6 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
 
   const coffeeBags = coffeeBagsQuery.data ?? [];
 
-  const selectedMethod = useMemo(
-    () => brewMethods.find((m) => m.id === form.state.values.brewMethodId),
-    [brewMethods, form.state.values.brewMethodId],
-  );
-
   const selectBrewMethod = (method: BrewMethod) => {
     form.setFieldValue('brewMethodId', method.id);
     form.setFieldValue('coffeeDose', method.dose.default);
@@ -65,8 +61,41 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
   }, [brewMethods]);
 
   return (
+    <CreateBrewForm
+      form={form}
+      brewMethods={brewMethods}
+      coffeeBags={coffeeBags}
+      selectBrewMethod={selectBrewMethod}
+      isLoading={mutationLoading}
+      onCancel={onCancel}
+    />
+  );
+}
+
+interface CreateBrewFormInnerProps {
+  form: ReturnType<typeof useCreateBrew>['form'];
+  brewMethods: BrewMethod[];
+  coffeeBags: CoffeeBag[];
+  selectBrewMethod: (method: BrewMethod) => void;
+  isLoading: boolean;
+  onCancel: () => void;
+}
+
+function CreateBrewForm({
+  form,
+  brewMethods,
+  coffeeBags,
+  selectBrewMethod,
+  isLoading,
+  onCancel,
+}: CreateBrewFormInnerProps) {
+  const selectedMethod = useMemo(
+    () => brewMethods.find((m) => m.id === form.state.values.brewMethodId),
+    [brewMethods, form.state.values.brewMethodId],
+  );
+
+  return (
     <form
-      key={selectedMethod?.name ?? 'unknown'}
       onSubmit={(e) => {
         e.preventDefault();
         form.handleSubmit();
@@ -302,8 +331,8 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={mutationLoading}>
-          {mutationLoading ? 'Saving...' : 'Save Brew'}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Brew'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Hide
