@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { apiClients } from '@/api/apiClients';
 import { StarDisplay } from '@/components/ui/StarDisplay';
 
-export function PreviousBrews() {
+export const PreviousBrews = () => {
   const query = useQuery({
     queryKey: ['brews'],
     queryFn: () => apiClients.brew.getBrews(),
@@ -48,9 +48,9 @@ export function PreviousBrews() {
       </div>
     </div>
   );
-}
+};
 
-function BrewCard({ brew }: { brew: Brew }) {
+const BrewCard = ({ brew }: { brew: Brew }) => {
   const formattedDate = new Date(brew.brewedOn).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -109,4 +109,4 @@ function BrewCard({ brew }: { brew: Brew }) {
       </CardContent>
     </Card>
   );
-}
+};
