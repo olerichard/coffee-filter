@@ -5,7 +5,8 @@ export const BrewResponseSchema = z.object({
   id: z.number(),
   coffeeBagId: z.number(),
   coffeeBag: CoffeeBagResponseSchema,
-  brewType: z.string(),
+  brewMethodId: z.number(),
+  brewMethodName: z.string(),
   coffeeDose: z.number(),
   grindSize: z.number(),
   brewTime: z.number(),
@@ -19,7 +20,7 @@ export type Brew = z.infer<typeof BrewResponseSchema>;
 
 export const BrewCreateRequestSchema = z.object({
   coffeeBagId: z.number().min(1, 'Coffee bag is required'),
-  brewType: z.string().min(1, 'Brew type is required'),
+  brewMethodId: z.number().min(1, 'Brew method is required'),
   brewTasteScore: z.number().max(5),
   coffeeDose: z.number().positive('Dose is required'),
   grindSize: z.number().positive('Grind size is required'),
@@ -32,7 +33,7 @@ export type BrewCreateRequest = z.infer<typeof BrewCreateRequestSchema>;
 
 export const BrewUpdateRequestSchema = z.object({
   coffeeBagId: z.number().min(1, 'Coffee bag is required'),
-  brewType: z.string().min(1, 'Brew type is required'),
+  brewMethodId: z.number().min(1, 'Brew method is required'),
   brewTasteScore: z.number().max(5),
   coffeeDose: z.number().positive('Dose is required'),
   grindSize: z.number().positive('Grind size is required'),

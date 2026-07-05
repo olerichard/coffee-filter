@@ -5,8 +5,6 @@ import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { BrewCreateRequestSchema } from '@/api/brews/brewRequestSchemas';
 import { apiClients } from '@/api/apiClients';
 
-export const BREW_TYPES = ['Espresso'] as const;
-
 export const BrewFormSchema = BrewCreateRequestSchema;
 
 export type BrewFormValues = z.infer<typeof BrewFormSchema>;
@@ -17,12 +15,12 @@ interface UseCreateBrewOptions {
 
 const defaultValues: BrewFormValues = {
   coffeeBagId: 0,
-  brewType: 'Espresso',
+  brewMethodId: 0,
   brewTasteScore: 0,
-  coffeeDose: 18,
-  grindSize: 2,
-  brewTime: 27,
-  brewWeight: 37,
+  coffeeDose: 0,
+  grindSize: 0,
+  brewTime: 0,
+  brewWeight: 0,
   notes: '',
 };
 

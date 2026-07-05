@@ -83,7 +83,7 @@ const BrewCard = ({ brew }: { brew: Brew }) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span className="font-medium">{brew.brewType}</span>
+            <span className="font-medium">{brew.brewMethodName}</span>
             <span className="text-muted-foreground">·</span>
             <span>{brew.coffeeDose}g</span>
             <span className="text-muted-foreground">·</span>

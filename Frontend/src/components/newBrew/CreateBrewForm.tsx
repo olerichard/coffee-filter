@@ -1,4 +1,5 @@
-import { BREW_TYPES, useCreateBrew } from './useCreateBrew';
+import { useEffect, useMemo } from 'react';
+import { useCreateBrew } from './useCreateBrew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,6 +14,9 @@ import { StarSelector } from '@/components/ui/StarSelector';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { useQuery } from '@tanstack/react-query';
 import { apiClients } from '@/api/apiClients';
+import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+
+const NO_MAX = 999;
 
 interface CreateBrewFormProps {
   onCancel: () => void;
@@ -25,6 +29,13 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
     },
   });
 
+  const brewMethodsQuery = useQuery({
+    queryKey: ['brewMethods'],
+    queryFn: () => apiClients.brewMethod.getBrewMethods(),
+  });
+
+  const brewMethods = brewMethodsQuery.data ?? [];
+
   const coffeeBagsQuery = useQuery({
     queryKey: ['coffeeBags'],
     queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
@@ -32,8 +43,30 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
 
   const coffeeBags = coffeeBagsQuery.data ?? [];
 
+  const selectedMethod = useMemo(
+    () => brewMethods.find((m) => m.id === form.state.values.brewMethodId),
+    [brewMethods, form.state.values.brewMethodId],
+  );
+
+  const selectBrewMethod = (method: BrewMethod) => {
+    form.setFieldValue('brewMethodId', method.id);
+    form.setFieldValue('coffeeDose', method.dose.default);
+    form.setFieldValue('grindSize', method.grindSize.default);
+    form.setFieldValue('brewTime', method.brewTime.default);
+    form.setFieldValue('brewWeight', method.brewWeight.default);
+  };
+
+  useEffect(() => {
+    if (brewMethods.length > 0 && form.state.values.brewMethodId === 0) {
+      const espresso = brewMethods.find((m) => m.name === 'Espresso');
+      const defaultMethod = espresso ?? brewMethods[0];
+      selectBrewMethod(defaultMethod);
+    }
+  }, [brewMethods]);
+
   return (
     <form
+      key={selectedMethod?.name ?? 'unknown'}
       onSubmit={(e) => {
         e.preventDefault();
         form.handleSubmit();
@@ -41,28 +74,34 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
       className="flex flex-col gap-4"
     >
       <div className="grid grid-cols-2 gap-4">
-        <form.Field name="brewType">
+        <form.Field name="brewMethodId">
           {(field) => (
             <Field>
-              <FieldLabel htmlFor="brewType">Brew Type *</FieldLabel>
+              <FieldLabel htmlFor="brewMethodId">Brew Method *</FieldLabel>
               <Select
-                disabled
-                value={field.state.value}
-                onValueChange={field.handleChange}
+                value={
+                  field.state.value !== 0 ? field.state.value.toString() : ''
+                }
+                onValueChange={(value) => {
+                  const method = brewMethods.find(
+                    (m) => m.id === parseInt(value),
+                  );
+                  if (method) selectBrewMethod(method);
+                }}
               >
                 <SelectTrigger
                   aria-invalid={
                     field.state.meta.errors.length > 0 &&
                     field.state.meta.isTouched
                   }
-                  id="brewType"
+                  id="brewMethodId"
                 >
-                  <SelectValue placeholder="Select brew type" />
+                  <SelectValue placeholder="Select brew method" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BREW_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {brewMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.id.toString()}>
+                      {method.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -124,8 +163,12 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
                 id="coffeeDose"
                 value={field.state.value}
                 onChange={field.handleChange}
-                min={1}
-                max={30}
+                min={selectedMethod?.dose.min ?? 1}
+                max={
+                  selectedMethod?.dose.max === 0
+                    ? NO_MAX
+                    : (selectedMethod?.dose.max ?? 30)
+                }
                 allowDecimal
               />
               {field.state.meta.errors.length > 0 &&
@@ -147,8 +190,12 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
                 allowDecimal
                 value={field.state.value}
                 onChange={field.handleChange}
-                min={0.5}
-                max={20}
+                min={selectedMethod?.grindSize.min ?? 0.5}
+                max={
+                  selectedMethod?.grindSize.max === 0
+                    ? NO_MAX
+                    : (selectedMethod?.grindSize.max ?? 20)
+                }
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
@@ -170,8 +217,12 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
                 id="brewTime"
                 value={field.state.value}
                 onChange={field.handleChange}
-                min={1}
-                max={40}
+                min={selectedMethod?.brewTime.min ?? 1}
+                max={
+                  selectedMethod?.brewTime.max === 0
+                    ? NO_MAX
+                    : (selectedMethod?.brewTime.max ?? 40)
+                }
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (
@@ -191,8 +242,12 @@ export function CreateBrewForm({ onCancel }: CreateBrewFormProps) {
                 id="brewWeight"
                 value={field.state.value}
                 onChange={field.handleChange}
-                min={1}
-                max={50}
+                min={selectedMethod?.brewWeight.min ?? 1}
+                max={
+                  selectedMethod?.brewWeight.max === 0
+                    ? NO_MAX
+                    : (selectedMethod?.brewWeight.max ?? 50)
+                }
               />
               {field.state.meta.errors.length > 0 &&
                 field.state.meta.isTouched && (

@@ -32,9 +32,9 @@ namespace Api.Database
 
              var brewMethods = new List<BrewMethodEntity>
             {
-                new() { Name = "Espresso", DoseMin = 14, DoseMax = 22, DoseDefault = 18, GrindSizeMin = 1.0, GrindSizeMax = 3.0, GrindSizeDefault = 2.0, BrewTimeMin = 20, BrewTimeMax = 35, BrewTimeDefault = 27, BrewWeightMin = 28, BrewWeightMax = 40, BrewWeightDefault = 36, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
-                new() { Name = "V60", DoseMin = 14, DoseMax = 22, DoseDefault = 18, GrindSizeMin = 2.0, GrindSizeMax = 5.0, GrindSizeDefault = 3.5, BrewTimeMin = 180, BrewTimeMax = 300, BrewTimeDefault = 240, BrewWeightMin = 200, BrewWeightMax = 400, BrewWeightDefault = 300, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
-                new() { Name = "French Press", DoseMin = 16, DoseMax = 24, DoseDefault = 20, GrindSizeMin = 4.0, GrindSizeMax = 8.0, GrindSizeDefault = 6.0, BrewTimeMin = 240, BrewTimeMax = 360, BrewTimeDefault = 300, BrewWeightMin = 250, BrewWeightMax = 400, BrewWeightDefault = 350, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() }
+                new() { Name = "Espresso", DoseMin = 10, DoseMax = 30, DoseDefault = 18, GrindSizeMin = 1.0, GrindSizeMax = 3.0, GrindSizeDefault = 2.0, BrewTimeMin = 10, BrewTimeMax = 60, BrewTimeDefault = 27, BrewWeightMin = 1, BrewWeightMax = 60, BrewWeightDefault = 36, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Name = "V60", DoseMin = 10, DoseMax = 60, DoseDefault = 16, GrindSizeMin = 10.0, GrindSizeMax = 15.0, GrindSizeDefault = 12.5, BrewTimeMin = 10, BrewTimeMax = 420, BrewTimeDefault = 150, BrewWeightMin = 1, BrewWeightMax = 400, BrewWeightDefault = 240, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Name = "French Press", DoseMin = 10, DoseMax = 120, DoseDefault = 60, GrindSizeMin = 6, GrindSizeMax = 15.0, GrindSizeDefault = 13.0, BrewTimeMin = 60, BrewTimeMax = 600, BrewTimeDefault = 300, BrewWeightMin = 100, BrewWeightMax = 999, BrewWeightDefault = 900, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() }
             };
 
             await context.BrewMethods.AddRangeAsync(brewMethods);
