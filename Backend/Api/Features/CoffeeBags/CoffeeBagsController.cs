@@ -54,6 +54,7 @@ public class CoffeeBagsController : BaseController
 
     var coffeeBags = await query
       .Include(cb => cb.Brews)
+      .OrderByDescending(cb => cb.LastModifiedOn)
       .ToListAsync();
 
     var responses = coffeeBags.Select(cb => cb.ToCoffeeBagResponse()).ToList();
