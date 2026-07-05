@@ -1,4 +1,4 @@
-namespace Api.Features.Brewing.Brews.DTOs;
+namespace Api.Features.Brews.DTOs;
 
 public record CoffeeBagResponse
 {

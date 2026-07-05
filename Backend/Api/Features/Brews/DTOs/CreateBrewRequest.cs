@@ -1,28 +1,28 @@
-namespace Api.Features.Brewing.Brews.DTOs
+namespace Api.Features.Brews.DTOs
 {
   using Api.Database;
   using Api.Core.Auth;
   using FluentValidation;
   using Microsoft.EntityFrameworkCore;
 
-  public record UpdateBrewRequest
+  public record CreateBrewRequest
   {
-    public int? CoffeeBagId { get; set; }
-    public string? BrewType { get; set; }
-    public int? BrewTasteScore { get; set; }
-    public double? CoffeeDose { get; set; }
-    public double? GrindSize { get; set; }
-    public int? BrewTime { get; set; }
+    public int CoffeeBagId { get; set; }
+    public required string BrewType { get; set; }
+    public int BrewTasteScore { get; set; }
+    public double CoffeeDose { get; set; }
+    public double GrindSize { get; set; }
+    public int BrewTime { get; set; }
     public double? BrewWeight { get; set; }
     public string? Notes { get; set; }
   }
 
-  public class UpdateBrewRequestValidator : AbstractValidator<UpdateBrewRequest>
+  public class CreateBrewRequestValidator : AbstractValidator<CreateBrewRequest>
   {
     private readonly AppDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
 
-    public UpdateBrewRequestValidator(
+    public CreateBrewRequestValidator(
         AppDbContext dbContext,
         ICurrentUserService currentUserService)
     {
@@ -30,42 +30,29 @@ namespace Api.Features.Brewing.Brews.DTOs
       _currentUserService = currentUserService;
 
       RuleFor(x => x.CoffeeBagId)
-        .MustAsync(async (id, ct) =>
-        {
-          if (!id.HasValue) return true;
-          var userId = _currentUserService.GetCurrentUserId();
-          if (!userId.HasValue) return false;
-          return await _dbContext.CoffeeBags.AnyAsync(cb => cb.Id == id.Value && cb.UserId == userId.Value, ct);
-        })
-        .When(x => x.CoffeeBagId.HasValue)
+        .MustAsync(CoffeeBagExistsAndOwnedByUser)
         .WithMessage("CoffeeBag not found or access denied");
 
       RuleFor(x => x.BrewType)
         .NotEmpty()
-        .When(x => x.BrewType != null)
         .WithMessage("BrewType is required")
         .MaximumLength(50)
-        .When(x => x.BrewType != null)
         .WithMessage("BrewType must not exceed 50 characters");
 
       RuleFor(x => x.BrewTasteScore)
         .InclusiveBetween(0, 10)
-        .When(x => x.BrewTasteScore.HasValue)
         .WithMessage("BrewTasteScore must be between 0 and 10");
 
       RuleFor(x => x.CoffeeDose)
         .GreaterThan(0)
-        .When(x => x.CoffeeDose.HasValue)
         .WithMessage("CoffeeDose must be greater than 0");
 
       RuleFor(x => x.GrindSize)
         .GreaterThan(0)
-        .When(x => x.GrindSize.HasValue)
         .WithMessage("GrindSize must be greater than 0");
 
       RuleFor(x => x.BrewTime)
         .GreaterThan(0)
-        .When(x => x.BrewTime.HasValue)
         .WithMessage("BrewTime must be greater than 0");
 
       RuleFor(x => x.BrewWeight)

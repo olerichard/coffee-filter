@@ -1,7 +1,7 @@
-namespace Api.Features.Brewing.Brews;
+namespace Api.Features.Brews;
 
 using Api.Database.Entities;
-using Api.Features.Brewing.Brews.DTOs;
+using Api.Features.Brews.DTOs;
 
 public static class BrewEntityExtensions
 {

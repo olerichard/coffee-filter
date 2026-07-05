@@ -1,13 +1,13 @@
-namespace Api.Features.Brewing.Brews
+namespace Api.Features.Brews
 {
   using Api.Database;
-  using Api.Features.Brewing.Brews.DTOs;
   using Api.Core;
   using Api.Core.Auth;
 
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.Mvc.ModelBinding;
   using Microsoft.EntityFrameworkCore;
+  using Api.Features.Brews.DTOs;
 
   public class BrewsController : BaseController
   {
