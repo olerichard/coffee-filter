@@ -87,7 +87,12 @@ namespace Api.Features.Brews
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();
 
-      return CreatedAtAction(nameof(GetBrewById), new { id = brew.Id }, brew.ToBrewResponse());
+      var createdBrew = await _dbContext.Brews
+        .Include(b => b.CoffeeBag)
+        .Include(b => b.BrewMethod)
+        .FirstAsync(b => b.Id == brew.Id);
+
+      return CreatedAtAction(nameof(GetBrewById), new { id = brew.Id }, createdBrew.ToBrewResponse());
     }
 
     /// <summary>

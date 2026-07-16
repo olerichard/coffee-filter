@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClients } from '@/api/apiClients';
 import { useCreateBrew, getDefaultValues } from './useCreateBrew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +13,6 @@ import {
 import { NumberCarousel } from '@/components/brews/NumberCarousel';
 import { StarSelector } from '@/components/ui/StarSelector';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
-import { useQuery } from '@tanstack/react-query';
-import { apiClients } from '@/api/apiClients';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 
@@ -77,11 +76,6 @@ function CreateBrewForm({
     onSuccess: onCancel,
   });
 
-  const selectedMethod = useMemo(
-    () => brewMethods.find((m) => m.id === form.state.values.brewMethodId),
-    [brewMethods, form.state.values.brewMethodId],
-  );
-
   const selectBrewMethod = (method: BrewMethod) => {
     form.reset(getDefaultValues(method));
   };
@@ -95,14 +89,12 @@ function CreateBrewForm({
       className="flex flex-col gap-4"
     >
       <div className="grid grid-cols-2 gap-4">
-        <form.Field name="brewMethodId">
+        <form.Field name="brewMethod">
           {(field) => (
             <Field>
-              <FieldLabel htmlFor="brewMethodId">Brew Method *</FieldLabel>
+              <FieldLabel htmlFor="brewMethod">Brew Method *</FieldLabel>
               <Select
-                value={
-                  field.state.value !== 0 ? field.state.value.toString() : ''
-                }
+                value={field.state.value.id.toString()}
                 onValueChange={(value) => {
                   const method = brewMethods.find(
                     (m) => m.id === parseInt(value),
@@ -115,7 +107,7 @@ function CreateBrewForm({
                     field.state.meta.errors.length > 0 &&
                     field.state.meta.isTouched
                   }
-                  id="brewMethodId"
+                  id="brewMethod"
                 >
                   <SelectValue placeholder="Select brew method" />
                 </SelectTrigger>
@@ -176,109 +168,133 @@ function CreateBrewForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <form.Field name="coffeeDose">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
-              <NumberCarousel
-                id="coffeeDose"
-                value={field.state.value}
-                onChange={field.handleChange}
-                min={selectedMethod?.dose.min ?? 1}
-                max={
-                  selectedMethod?.dose.max === 0
-                    ? NO_MAX
-                    : (selectedMethod?.dose.max ?? 30)
-                }
-                allowDecimal
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
+        <form.Subscribe
+          selector={(state) => state.values.brewMethod}
+        >
+          {(brewMethod) => (
+            <form.Field name="coffeeDose">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="coffeeDose">Dose (g)</FieldLabel>
+                  <NumberCarousel
+                    id="coffeeDose"
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    min={brewMethod.dose.min}
+                    max={
+                      brewMethod.dose.max === 0
+                        ? NO_MAX
+                        : brewMethod.dose.max
+                    }
+                    allowDecimal
+                  />
+                  {field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched && (
+                      <FieldDescription>
+                        {field.state.meta.errors[0]?.message}
+                      </FieldDescription>
+                    )}
+                </Field>
+              )}
+            </form.Field>
           )}
-        </form.Field>
+        </form.Subscribe>
 
-        <form.Field name="grindSize">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
-              <NumberCarousel
-                id="grindSize"
-                allowDecimal
-                value={field.state.value}
-                onChange={field.handleChange}
-                min={selectedMethod?.grindSize.min ?? 0.5}
-                max={
-                  selectedMethod?.grindSize.max === 0
-                    ? NO_MAX
-                    : (selectedMethod?.grindSize.max ?? 20)
-                }
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
+        <form.Subscribe
+          selector={(state) => state.values.brewMethod}
+        >
+          {(brewMethod) => (
+            <form.Field name="grindSize">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="grindSize">Grind Size *</FieldLabel>
+                  <NumberCarousel
+                    id="grindSize"
+                    allowDecimal
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    min={brewMethod.grindSize.min}
+                    max={
+                      brewMethod.grindSize.max === 0
+                        ? NO_MAX
+                        : brewMethod.grindSize.max
+                    }
+                  />
+                  {field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched && (
+                      <FieldDescription>
+                        {field.state.meta.errors[0]?.message}
+                      </FieldDescription>
+                    )}
+                </Field>
+              )}
+            </form.Field>
           )}
-        </form.Field>
+        </form.Subscribe>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <form.Field name="brewTime">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
-              <NumberCarousel
-                id="brewTime"
-                value={field.state.value}
-                onChange={field.handleChange}
-                min={selectedMethod?.brewTime.min ?? 1}
-                max={
-                  selectedMethod?.brewTime.max === 0
-                    ? NO_MAX
-                    : (selectedMethod?.brewTime.max ?? 40)
-                }
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
+        <form.Subscribe
+          selector={(state) => state.values.brewMethod}
+        >
+          {(brewMethod) => (
+            <form.Field name="brewTime">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="brewTime">Brew Time (s) *</FieldLabel>
+                  <NumberCarousel
+                    id="brewTime"
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    min={brewMethod.brewTime.min}
+                    max={
+                      brewMethod.brewTime.max === 0
+                        ? NO_MAX
+                        : brewMethod.brewTime.max
+                    }
+                  />
+                  {field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched && (
+                      <FieldDescription>
+                        {field.state.meta.errors[0]?.message}
+                      </FieldDescription>
+                    )}
+                </Field>
+              )}
+            </form.Field>
           )}
-        </form.Field>
+        </form.Subscribe>
 
-        <form.Field name="brewWeight">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
-              <NumberCarousel
-                id="brewWeight"
-                value={field.state.value}
-                onChange={field.handleChange}
-                min={selectedMethod?.brewWeight.min ?? 1}
-                max={
-                  selectedMethod?.brewWeight.max === 0
-                    ? NO_MAX
-                    : (selectedMethod?.brewWeight.max ?? 50)
-                }
-              />
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
+        <form.Subscribe
+          selector={(state) => state.values.brewMethod}
+        >
+          {(brewMethod) => (
+            <form.Field name="brewWeight">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="brewWeight">Brew Weight (g)</FieldLabel>
+                  <NumberCarousel
+                    id="brewWeight"
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    min={brewMethod.brewWeight.min}
+                    max={
+                      brewMethod.brewWeight.max === 0
+                        ? NO_MAX
+                        : brewMethod.brewWeight.max
+                    }
+                  />
+                  {field.state.meta.errors.length > 0 &&
+                    field.state.meta.isTouched && (
+                      <FieldDescription>
+                        {field.state.meta.errors[0]?.message}
+                      </FieldDescription>
+                    )}
+                </Field>
+              )}
+            </form.Field>
           )}
-        </form.Field>
+        </form.Subscribe>
       </div>
 
       <form.Field name="brewTasteScore">
