@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { getDefaultValues, useCreateBrew } from './useCreateBrew';
+import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { apiClients } from '@/api/apiClients';
-import { useCreateBrew, getDefaultValues } from './useCreateBrew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,9 +14,8 @@ import {
 } from '@/components/ui/select';
 import { NumberCarousel } from '@/components/brews/NumberCarousel';
 import { StarSelector } from '@/components/ui/StarSelector';
+import { explodeBeans } from '@/lib/beanExplosion';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
-import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
-import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 
 const NO_MAX = 999;
 
@@ -60,8 +61,8 @@ export function CreateBrew({ onCancel }: CreateBrewProps) {
 
 interface CreateBrewFormInnerProps {
   initialSelectedMethod: BrewMethod;
-  brewMethods: BrewMethod[];
-  coffeeBags: CoffeeBag[];
+  brewMethods: Array<BrewMethod>;
+  coffeeBags: Array<CoffeeBag>;
   onCancel: () => void;
 }
 
@@ -84,7 +85,7 @@ function CreateBrewForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        form.handleSubmit();
+        // form.handleSubmit();
       }}
       className="flex flex-col gap-4"
     >
@@ -168,9 +169,7 @@ function CreateBrewForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <form.Subscribe
-          selector={(state) => state.values.brewMethod}
-        >
+        <form.Subscribe selector={(state) => state.values.brewMethod}>
           {(brewMethod) => (
             <form.Field name="coffeeDose">
               {(field) => (
@@ -182,9 +181,7 @@ function CreateBrewForm({
                     onChange={field.handleChange}
                     min={brewMethod.dose.min}
                     max={
-                      brewMethod.dose.max === 0
-                        ? NO_MAX
-                        : brewMethod.dose.max
+                      brewMethod.dose.max === 0 ? NO_MAX : brewMethod.dose.max
                     }
                     allowDecimal
                   />
@@ -200,9 +197,7 @@ function CreateBrewForm({
           )}
         </form.Subscribe>
 
-        <form.Subscribe
-          selector={(state) => state.values.brewMethod}
-        >
+        <form.Subscribe selector={(state) => state.values.brewMethod}>
           {(brewMethod) => (
             <form.Field name="grindSize">
               {(field) => (
@@ -234,9 +229,7 @@ function CreateBrewForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <form.Subscribe
-          selector={(state) => state.values.brewMethod}
-        >
+        <form.Subscribe selector={(state) => state.values.brewMethod}>
           {(brewMethod) => (
             <form.Field name="brewTime">
               {(field) => (
@@ -265,9 +258,7 @@ function CreateBrewForm({
           )}
         </form.Subscribe>
 
-        <form.Subscribe
-          selector={(state) => state.values.brewMethod}
-        >
+        <form.Subscribe selector={(state) => state.values.brewMethod}>
           {(brewMethod) => (
             <form.Field name="brewWeight">
               {(field) => (
@@ -339,7 +330,11 @@ function CreateBrewForm({
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={isLoading}>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          onClick={(e) => explodeBeans(e.currentTarget, { count: 100 })}
+        >
           {isLoading ? 'Saving...' : 'Save Brew'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
