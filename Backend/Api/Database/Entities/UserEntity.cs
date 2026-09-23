@@ -15,6 +15,7 @@ namespace Api.Database.Entities
     // Navigation properties
     public ICollection<CoffeeBagEntity> CoffeeBags {get;set;} = [];
     public ICollection<BrewEntity> Brews {get;set;} = [];
+    public ICollection<UserGrinderEntity> UserGrinders {get;set;} = [];
  
   }
 }

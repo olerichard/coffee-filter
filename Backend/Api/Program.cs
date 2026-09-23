@@ -125,6 +125,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
             options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
             // Always serialize DateTime as UTC (ISO 8601 with Z suffix)
             options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+            // Serialize enums as camelCase strings (e.g. "espresso")
+            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
         });
         
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

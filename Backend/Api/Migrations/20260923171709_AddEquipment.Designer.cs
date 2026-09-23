@@ -2,6 +2,7 @@
 using Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923171709_AddEquipment")]
+    partial class AddEquipment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -69,7 +72,7 @@ namespace Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Brews", (string)null);
+                    b.ToTable("Brews");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.BrewMethodEntity", b =>
@@ -132,7 +135,7 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BrewMethods", (string)null);
+                    b.ToTable("BrewMethods");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.CoffeeBagEntity", b =>
@@ -184,7 +187,7 @@ namespace Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CoffeeBags", (string)null);
+                    b.ToTable("CoffeeBags");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.GrinderModelEntity", b =>
@@ -228,7 +231,7 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GrinderModels", (string)null);
+                    b.ToTable("GrinderModels");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.UserEntity", b =>
@@ -278,7 +281,7 @@ namespace Api.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.UserGrinderEntity", b =>
@@ -314,7 +317,7 @@ namespace Api.Migrations
                     b.HasIndex("UserId", "GrinderModelId")
                         .IsUnique();
 
-                    b.ToTable("UserGrinders", (string)null);
+                    b.ToTable("UserGrinders");
                 });
 
             modelBuilder.Entity("Api.Database.Entities.BrewEntity", b =>

@@ -11,6 +11,8 @@ namespace Api.Database
     public DbSet<BrewEntity> Brews { get; set; } = null!;
     public DbSet<CoffeeBagEntity> CoffeeBags { get; set; } = null!;
     public DbSet<BrewMethodEntity> BrewMethods { get; set; } = null!;
+    public DbSet<GrinderModelEntity> GrinderModels { get; set; } = null!;
+    public DbSet<UserGrinderEntity> UserGrinders { get; set; } = null!;
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -59,6 +61,33 @@ namespace Api.Database
         .WithMany()
         .HasForeignKey(b => b.BrewMethodId)
         .OnDelete(DeleteBehavior.Restrict);
+
+      // Store grinder style as a string column
+      modelBuilder.Entity<GrinderModelEntity>()
+        .Property(g => g.Style)
+        .HasConversion<string>();
+
+      // Configure User -> UserGrinder relationship
+      modelBuilder.Entity<UserGrinderEntity>()
+        .HasOne(ug => ug.User)
+        .WithMany(u => u.UserGrinders)
+        .HasForeignKey(ug => ug.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+      modelBuilder.Entity<UserGrinderEntity>()
+        .HasIndex(ug => ug.UserId);
+
+      // Configure GrinderModel -> UserGrinder relationship (catalog data is restricted, not cascaded)
+      modelBuilder.Entity<UserGrinderEntity>()
+        .HasOne(ug => ug.GrinderModel)
+        .WithMany(g => g.UserGrinders)
+        .HasForeignKey(ug => ug.GrinderModelId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+      // One ownership row per user per grinder model
+      modelBuilder.Entity<UserGrinderEntity>()
+        .HasIndex(ug => new { ug.UserId, ug.GrinderModelId })
+        .IsUnique();
     }
   }
 }

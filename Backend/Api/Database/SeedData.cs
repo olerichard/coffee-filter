@@ -14,6 +14,7 @@ namespace Api.Database
 
             if (await context.Users.AnyAsync() || await context.CoffeeBags.AnyAsync() || await context.Brews.AnyAsync() || await context.BrewMethods.AnyAsync())
             {
+                await SeedEquipmentAsync(context);
                 return;
             }
 
@@ -110,6 +111,46 @@ namespace Api.Database
 
             await context.Brews.AddRangeAsync(brews);
             await context.SaveChangesAsync();
+
+            await SeedEquipmentAsync(context);
+        }
+
+        private static async Task SeedEquipmentAsync(AppDbContext context)
+        {
+            if (await context.GrinderModels.AnyAsync())
+            {
+                return;
+            }
+
+            var oleUserId = await context.Users
+                .Where(u => u.Username == "ole")
+                .Select(u => (int?)u.Id)
+                .FirstOrDefaultAsync();
+
+            var grinderModels = new List<GrinderModelEntity>
+            {
+                new() { Manufacturer = "Comandante", ModelName = "C40 MK4", Style = GrinderStyle.Universal, GrindSettingMin = 0, GrindSettingMax = 8, GrindSettingResolution = 0, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Manufacturer = "Baratza", ModelName = "Encore", Style = GrinderStyle.Filter, GrindSettingMin = 1, GrindSettingMax = 40, GrindSettingResolution = 0, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Manufacturer = "Fellow", ModelName = "Ode Gen 2", Style = GrinderStyle.Filter, GrindSettingMin = 1, GrindSettingMax = 11, GrindSettingResolution = 0, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Manufacturer = "Niche", ModelName = "Zero", Style = GrinderStyle.Universal, GrindSettingMin = 0, GrindSettingMax = 70, GrindSettingResolution = 0, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Manufacturer = "1Zpresso", ModelName = "J-Ultra", Style = GrinderStyle.Espresso, GrindSettingMin = 0, GrindSettingMax = 50, GrindSettingResolution = 1, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                new() { Manufacturer = "DF64", ModelName = "Gen 2", Style = GrinderStyle.Espresso, GrindSettingMin = 0, GrindSettingMax = 50, GrindSettingResolution = 1, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+            };
+
+            await context.GrinderModels.AddRangeAsync(grinderModels);
+            await context.SaveChangesAsync();
+
+            if (oleUserId.HasValue && !await context.UserGrinders.AnyAsync())
+            {
+                var userGrinders = new List<UserGrinderEntity>
+                {
+                    new() { UserId = oleUserId.Value, GrinderModelId = grinderModels[0].Id, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                    new() { UserId = oleUserId.Value, GrinderModelId = grinderModels[4].Id, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
+                };
+
+                await context.UserGrinders.AddRangeAsync(userGrinders);
+                await context.SaveChangesAsync();
+            }
         }
 
         private static DateTime GetRandomDate()
