@@ -1,23 +1,23 @@
-namespace Api.Features.UserGrinders
+namespace Api.Features.UserEquipment
 {
   using Api.Database;
   using Api.Core;
   using Api.Core.Auth;
-  using Api.Features.UserGrinders.DTOs;
+  using Api.Features.UserEquipment.DTOs;
 
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.Mvc.ModelBinding;
   using Microsoft.EntityFrameworkCore;
 
-  public class UserGrindersController : BaseController
+  public class UserEquipmentController : BaseController
   {
     private readonly AppDbContext _dbContext;
-    private readonly ILogger<UserGrindersController> _logger;
+    private readonly ILogger<UserEquipmentController> _logger;
     private readonly ICurrentUserService _currentUserService;
 
-    public UserGrindersController(
+    public UserEquipmentController(
         AppDbContext dbContext,
-        ILogger<UserGrindersController> logger,
+        ILogger<UserEquipmentController> logger,
         ICurrentUserService currentUserService)
     {
       _dbContext = dbContext;
@@ -26,13 +26,13 @@ namespace Api.Features.UserGrinders
     }
 
     /// <summary>
-    /// Get all grinders owned by the current user.
+    /// Get all equipment owned by the current user.
     /// </summary>
-    /// <returns>An array of the user's grinders.</returns>
+    /// <returns>An array of the user's equipment.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<UserGrinderResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<UserEquipmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAllUserGrinders()
+    public async Task<IActionResult> GetAllUserEquipment()
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
@@ -40,28 +40,28 @@ namespace Api.Features.UserGrinders
         return Unauthorized();
       }
 
-      var grinders = await _dbContext.UserGrinders
-        .Where(ug => ug.UserId == userId.Value)
-        .Include(ug => ug.GrinderModel)
-        .OrderByDescending(ug => ug.LastModifiedOn)
-        .ThenByDescending(ug => ug.CreatedOn)
+      var equipment = await _dbContext.UserEquipment
+        .Where(ue => ue.UserId == userId.Value)
+        .Include(ue => ue.GrinderModel)
+        .OrderByDescending(ue => ue.LastModifiedOn)
+        .ThenByDescending(ue => ue.CreatedOn)
         .ToListAsync();
 
-      var response = grinders.Select(ug => ug.ToUserGrinderResponse()).ToList();
+      var response = equipment.Select(ue => ue.ToUserEquipmentResponse()).ToList();
 
       return Ok(response);
     }
 
     /// <summary>
-    /// Get a grinder owned by the current user by ID.
+    /// Get equipment owned by the current user by ID.
     /// </summary>
-    /// <param name="id">The user grinder ID.</param>
-    /// <returns>The user's grinder with the specified ID.</returns>
+    /// <param name="id">The user equipment ID.</param>
+    /// <returns>The user's equipment with the specified ID.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(UserGrinderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserEquipmentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetUserGrinderById(int id)
+    public async Task<IActionResult> GetUserEquipmentById(int id)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
@@ -69,32 +69,32 @@ namespace Api.Features.UserGrinders
         return Unauthorized();
       }
 
-      var grinder = await _dbContext.UserGrinders
-        .Where(ug => ug.Id == id && ug.UserId == userId.Value)
-        .Include(ug => ug.GrinderModel)
+      var equipment = await _dbContext.UserEquipment
+        .Where(ue => ue.Id == id && ue.UserId == userId.Value)
+        .Include(ue => ue.GrinderModel)
         .FirstOrDefaultAsync();
 
-      if (grinder == null)
+      if (equipment == null)
       {
         return NotFound();
       }
 
-      return Ok(grinder.ToUserGrinderResponse());
+      return Ok(equipment.ToUserEquipmentResponse());
     }
 
     /// <summary>
-    /// Register that the current user owns a grinder model.
+    /// Register that the current user owns equipment for the given grinder model.
     /// </summary>
     /// <param name="request">The grinder model to claim ownership of.</param>
     /// <param name="validator">The validator for the request.</param>
     /// <returns>The created ownership record.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(UserGrinderResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserEquipmentResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateUserGrinder(
-        [FromBody] CreateUserGrinderRequest request,
-        [FromServices] CreateUserGrinderRequestValidator validator)
+    public async Task<IActionResult> CreateUserEquipment(
+        [FromBody] CreateUserEquipmentRequest request,
+        [FromServices] CreateUserEquipmentRequestValidator validator)
     {
       var userId = _currentUserService.GetCurrentUserId();
       var userName = _currentUserService.GetCurrentUserName();
@@ -114,28 +114,28 @@ namespace Api.Features.UserGrinders
         return ValidationProblem(modelState);
       }
 
-      var userGrinder = request.ToUserGrinderEntity(userId.Value, userName);
-      _dbContext.UserGrinders.Add(userGrinder);
+      var userEquipment = request.ToUserEquipmentEntity(userId.Value, userName);
+      _dbContext.UserEquipment.Add(userEquipment);
       await _dbContext.SaveChangesAsync();
 
-      var created = await _dbContext.UserGrinders
-        .Where(ug => ug.Id == userGrinder.Id)
-        .Include(ug => ug.GrinderModel)
+      var created = await _dbContext.UserEquipment
+        .Where(ue => ue.Id == userEquipment.Id)
+        .Include(ue => ue.GrinderModel)
         .FirstAsync();
 
-      return CreatedAtAction(nameof(GetUserGrinderById), new { id = created.Id }, created.ToUserGrinderResponse());
+      return CreatedAtAction(nameof(GetUserEquipmentById), new { id = created.Id }, created.ToUserEquipmentResponse());
     }
 
     /// <summary>
-    /// Remove a grinder from the current user's collection.
+    /// Remove a piece of equipment from the current user's collection.
     /// </summary>
-    /// <param name="id">The user grinder ID.</param>
+    /// <param name="id">The user equipment ID.</param>
     /// <returns>No content.</returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteUserGrinder(int id)
+    public async Task<IActionResult> DeleteUserEquipment(int id)
     {
       var userId = _currentUserService.GetCurrentUserId();
       if (!userId.HasValue)
@@ -143,16 +143,16 @@ namespace Api.Features.UserGrinders
         return Unauthorized();
       }
 
-      var grinder = await _dbContext.UserGrinders
-        .Where(ug => ug.Id == id && ug.UserId == userId.Value)
+      var equipment = await _dbContext.UserEquipment
+        .Where(ue => ue.Id == id && ue.UserId == userId.Value)
         .FirstOrDefaultAsync();
 
-      if (grinder == null)
+      if (equipment == null)
       {
         return NotFound();
       }
 
-      _dbContext.UserGrinders.Remove(grinder);
+      _dbContext.UserEquipment.Remove(equipment);
       await _dbContext.SaveChangesAsync();
 
       return NoContent();

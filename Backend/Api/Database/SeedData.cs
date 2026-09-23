@@ -140,15 +140,15 @@ namespace Api.Database
             await context.GrinderModels.AddRangeAsync(grinderModels);
             await context.SaveChangesAsync();
 
-            if (oleUserId.HasValue && !await context.UserGrinders.AnyAsync())
+            if (oleUserId.HasValue && !await context.UserEquipment.AnyAsync())
             {
-                var userGrinders = new List<UserGrinderEntity>
+                var userEquipment = new List<UserEquipmentEntity>
                 {
                     new() { UserId = oleUserId.Value, GrinderModelId = grinderModels[0].Id, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
                     new() { UserId = oleUserId.Value, GrinderModelId = grinderModels[4].Id, CreatedBy = "ole", CreatedOn = GetRandomDate(), LastModifiedBy = "ole", LastModifiedOn = GetRandomDate() },
                 };
 
-                await context.UserGrinders.AddRangeAsync(userGrinders);
+                await context.UserEquipment.AddRangeAsync(userEquipment);
                 await context.SaveChangesAsync();
             }
         }

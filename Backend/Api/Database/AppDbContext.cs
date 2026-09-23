@@ -12,7 +12,7 @@ namespace Api.Database
     public DbSet<CoffeeBagEntity> CoffeeBags { get; set; } = null!;
     public DbSet<BrewMethodEntity> BrewMethods { get; set; } = null!;
     public DbSet<GrinderModelEntity> GrinderModels { get; set; } = null!;
-    public DbSet<UserGrinderEntity> UserGrinders { get; set; } = null!;
+    public DbSet<UserEquipmentEntity> UserEquipment { get; set; } = null!;
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -67,26 +67,26 @@ namespace Api.Database
         .Property(g => g.Style)
         .HasConversion<string>();
 
-      // Configure User -> UserGrinder relationship
-      modelBuilder.Entity<UserGrinderEntity>()
-        .HasOne(ug => ug.User)
-        .WithMany(u => u.UserGrinders)
-        .HasForeignKey(ug => ug.UserId)
+      // Configure User -> UserEquipment relationship
+      modelBuilder.Entity<UserEquipmentEntity>()
+        .HasOne(ue => ue.User)
+        .WithMany(u => u.UserEquipment)
+        .HasForeignKey(ue => ue.UserId)
         .OnDelete(DeleteBehavior.Cascade);
 
-      modelBuilder.Entity<UserGrinderEntity>()
-        .HasIndex(ug => ug.UserId);
+      modelBuilder.Entity<UserEquipmentEntity>()
+        .HasIndex(ue => ue.UserId);
 
-      // Configure GrinderModel -> UserGrinder relationship (catalog data is restricted, not cascaded)
-      modelBuilder.Entity<UserGrinderEntity>()
-        .HasOne(ug => ug.GrinderModel)
-        .WithMany(g => g.UserGrinders)
-        .HasForeignKey(ug => ug.GrinderModelId)
+      // Configure GrinderModel -> UserEquipment relationship (catalog data is restricted, not cascaded)
+      modelBuilder.Entity<UserEquipmentEntity>()
+        .HasOne(ue => ue.GrinderModel)
+        .WithMany(g => g.UserEquipment)
+        .HasForeignKey(ue => ue.GrinderModelId)
         .OnDelete(DeleteBehavior.Restrict);
 
       // One ownership row per user per grinder model
-      modelBuilder.Entity<UserGrinderEntity>()
-        .HasIndex(ug => new { ug.UserId, ug.GrinderModelId })
+      modelBuilder.Entity<UserEquipmentEntity>()
+        .HasIndex(ue => new { ue.UserId, ue.GrinderModelId })
         .IsUnique();
     }
   }

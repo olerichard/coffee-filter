@@ -1,21 +1,21 @@
-namespace Api.Features.UserGrinders.DTOs
+namespace Api.Features.UserEquipment.DTOs
 {
   using Api.Database;
   using Api.Core.Auth;
   using FluentValidation;
   using Microsoft.EntityFrameworkCore;
 
-  public record CreateUserGrinderRequest
+  public record CreateUserEquipmentRequest
   {
     public int GrinderModelId { get; set; }
   }
 
-  public class CreateUserGrinderRequestValidator : AbstractValidator<CreateUserGrinderRequest>
+  public class CreateUserEquipmentRequestValidator : AbstractValidator<CreateUserEquipmentRequest>
   {
     private readonly AppDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
 
-    public CreateUserGrinderRequestValidator(
+    public CreateUserEquipmentRequestValidator(
         AppDbContext dbContext,
         ICurrentUserService currentUserService)
     {
@@ -47,7 +47,7 @@ namespace Api.Features.UserGrinders.DTOs
       if (!userId.HasValue)
         return false;
 
-      return !await _dbContext.UserGrinders
+      return !await _dbContext.UserEquipment
         .AnyAsync(ug => ug.UserId == userId.Value && ug.GrinderModelId == grinderModelId, cancellationToken);
     }
   }

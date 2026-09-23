@@ -1,6 +1,6 @@
 namespace Api.Database.Entities
 {
-  public class UserGrinderEntity : AuditableEntity
+  public class UserEquipmentEntity : AuditableEntity
   {
     public int Id { get; set; }
     public required int UserId { get; set; }

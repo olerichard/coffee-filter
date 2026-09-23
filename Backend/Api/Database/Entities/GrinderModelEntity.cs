@@ -10,6 +10,6 @@ namespace Api.Database.Entities
     public double GrindSettingMax { get; set; }
     public int GrindSettingResolution { get; set; }
 
-    public ICollection<UserGrinderEntity> UserGrinders { get; set; } = [];
+    public ICollection<UserEquipmentEntity> UserEquipment { get; set; } = [];
   }
 }
