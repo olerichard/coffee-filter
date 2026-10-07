@@ -16,6 +16,7 @@ import { NumberCarousel } from '@/components/brews/NumberCarousel';
 import { StarSelector } from '@/components/ui/StarSelector';
 import { explodeBeans } from '@/lib/beanExplosion';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { useRef } from 'react';
 
 const NO_MAX = 999;
 
@@ -72,9 +73,15 @@ function CreateBrewForm({
   coffeeBags,
   onCancel,
 }: CreateBrewFormInnerProps) {
+  const submitRef = useRef<HTMLButtonElement>(null);
+
   const { form, isLoading } = useCreateBrew({
     initialSelectedMethod,
-    onSuccess: onCancel,
+    onSuccess: () => {
+      if (submitRef.current !== null)
+        explodeBeans(submitRef.current, { count: 100 });
+      onCancel();
+    },
   });
 
   const selectBrewMethod = (method: BrewMethod) => {
@@ -85,7 +92,7 @@ function CreateBrewForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        // form.handleSubmit();
+        form.handleSubmit();
       }}
       className="flex flex-col gap-4"
     >
@@ -330,11 +337,7 @@ function CreateBrewForm({
       </form.Field>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          onClick={(e) => explodeBeans(e.currentTarget, { count: 100 })}
-        >
+        <Button type="submit" ref={submitRef} disabled={isLoading}>
           {isLoading ? 'Saving...' : 'Save Brew'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
