@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Net;
+using Microsoft.Data.Sqlite;
 using Microsoft.IdentityModel.Tokens;
 using Api.Core.Auth;
 using FluentValidation;
@@ -19,19 +21,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 // Add services to the container.
 
+// Resolve the SQLite file path once so the connection string and the
+// directory creation below can never disagree.
+var connectionString = ResolveConnectionString(builder.Configuration);
+var databaseFilePath = new SqliteConnectionStringBuilder(connectionString).DataSource;
+
 // Configure DbContext with connection string from appsettings
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(connectionString));
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
-        builder =>
+        policy =>
         {
-            builder.WithOrigins("http://127.0.0.1:3000")
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins);
+            }
+
+            policy.AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
@@ -144,14 +156,18 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+// Only enforce HTTPS for loopback clients. Requests arriving on the machine's LAN
+// address stay on plain HTTP, which avoids untrusted dev-certificate warnings.
+app.UseWhen(
+    context => !IsLoopbackHost(context.Request.Host.Host),
+    branch => branch.UseHttpsRedirection());
 app.UseCors("AllowReactApp");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Create database directory with proper permissions and apply migrations
-CreateDatabaseDirectoryWithPermissions();
+CreateDatabaseDirectoryWithPermissions(databaseFilePath);
 
 using (var scope = app.Services.CreateScope())
 {
@@ -169,33 +185,51 @@ app.MapControllers();
 
 app.Run();
 
-void CreateDatabaseDirectoryWithPermissions()
+string ResolveConnectionString(IConfiguration configuration)
 {
-    var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".database");
-    
-    if (!Directory.Exists(dbPath))
+    var configured = configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+
+    // SQLite does not expand '~', so resolve it against the current user profile.
+    // This keeps the database in a stable per-user location on any machine.
+    var builder = new SqliteConnectionStringBuilder(configured);
+
+    if (builder.DataSource.StartsWith('~'))
     {
-        Directory.CreateDirectory(dbPath);
-        
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        builder.DataSource = Path.Combine(userProfile, builder.DataSource.TrimStart('~').TrimStart('/', '\\'));
+    }
+
+    if (string.IsNullOrWhiteSpace(builder.DataSource))
+    {
+        throw new InvalidOperationException("Connection string 'DefaultConnection' does not specify a data source.");
+    }
+
+    return builder.ToString();
+}
+
+void CreateDatabaseDirectoryWithPermissions(string databaseFilePath)
+{
+    var directory = Path.GetDirectoryName(databaseFilePath);
+
+    if (string.IsNullOrEmpty(directory))
+    {
+        throw new InvalidOperationException($"Could not determine the directory for database file '{databaseFilePath}'.");
+    }
+
+    if (!Directory.Exists(directory))
+    {
+        Directory.CreateDirectory(directory);
+
         // Set proper permissions on Unix-like systems
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        if (!OperatingSystem.IsWindows())
         {
             try
             {
-                var chmod = new System.Diagnostics.Process
-                {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = "chmod",
-                        Arguments = "755 " + dbPath,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-                chmod.Start();
-                chmod.WaitForExit();
+                File.SetUnixFileMode(directory,
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                    UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
             }
             catch (Exception ex)
             {
@@ -204,3 +238,7 @@ void CreateDatabaseDirectoryWithPermissions()
         }
     }
 }
+
+static bool IsLoopbackHost(string host) =>
+    host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+    (IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address));

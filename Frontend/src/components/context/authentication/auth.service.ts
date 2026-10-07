@@ -1,6 +1,5 @@
 import type { LoginRequest, LoginResponse } from './auth.types';
-
-const API_BASE_URL = 'http://127.0.0.1:5186/api';
+import { API_BASE_URL } from '@/api/base/apiConfig';
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {

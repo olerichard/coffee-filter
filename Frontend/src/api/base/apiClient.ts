@@ -1,7 +1,8 @@
 import type { ZodType } from 'zod';
+import { API_BASE_URL } from './apiConfig';
 
 class ApiClient {
-  private BASE_URL = 'http://127.0.0.1:5186/api';
+  private BASE_URL = API_BASE_URL;
 
   buildUrl(...args: string[]) {
     return args.length === 0

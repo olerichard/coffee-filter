@@ -7,6 +7,12 @@ import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
+  // Bind all interfaces so the dev server is reachable from other devices
+  // on the LAN via this machine's IP address.
+  server: {
+    host: true,
+    port: 3000,
+  },
   plugins: [
     devtools(),
     nitro(),
