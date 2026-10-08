@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { CoffeeBagCreateRequestSchema } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 
 export const ROAST_STYLES = [
@@ -50,11 +50,8 @@ export function useCreateCoffeeBag({ onSuccess }: UseCreateCoffeeBagOptions) {
       };
       return apiClients.coffeeBag.createCoffeeBag(formattedData);
     },
-    onSuccess: async (newCoffeeBag) => {
-      await queryClient.setQueryData(
-        ['coffeeBags'],
-        (old: Array<CoffeeBag> | undefined) => [newCoffeeBag, ...(old ?? [])],
-      );
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       form.reset();
       onSuccess();
     },

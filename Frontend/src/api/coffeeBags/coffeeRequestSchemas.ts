@@ -8,8 +8,8 @@ export const CoffeeBagResponseSchema = z.object({
   origin: z.string(),
   roastStyle: z.string(),
   flavourNotes: z.string().optional(),
-  opened: z.iso.datetime({ offset: true }).optional().nullable(),
-  emptied: z.iso.datetime({ offset: true }).optional().nullable(),
+  opened: z.iso.datetime({ offset: true }).optional(),
+  emptied: z.iso.datetime({ offset: true }).optional(),
 });
 
 export type CoffeeBag = z.infer<typeof CoffeeBagResponseSchema>;

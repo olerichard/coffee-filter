@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getDefaultValues, useCreateBrew } from './useCreateBrew';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +34,7 @@ export function CreateBrew({ onCancel }: CreateBrewProps) {
   const brewMethods = brewMethodsQuery.data ?? [];
 
   const coffeeBagsQuery = useQuery({
-    queryKey: ['coffeeBags'],
+    queryKey: coffeeBagKeys.list(false),
     queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
   });
 
@@ -138,40 +139,44 @@ function CreateBrewForm({
         </form.Field>
 
         <form.Field name="coffeeBagId">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
-              <Select
-                value={
-                  field.state.value !== 0 ? field.state.value.toString() : ''
-                }
-                onValueChange={(value) => field.handleChange(parseInt(value))}
-              >
-                <SelectTrigger
-                  aria-invalid={
-                    field.state.meta.errors.length > 0 &&
-                    field.state.meta.isTouched
-                  }
-                  id="coffeeBagId"
+          {(field) => {
+            const isBagAvailable = coffeeBags.some(
+              (bag) => bag.id === field.state.value,
+            );
+
+            return (
+              <Field>
+                <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
+                <Select
+                  value={isBagAvailable ? field.state.value.toString() : ''}
+                  onValueChange={(value) => field.handleChange(parseInt(value))}
                 >
-                  <SelectValue placeholder="Select a coffee bag" />
-                </SelectTrigger>
-                <SelectContent>
-                  {coffeeBags.map((bag) => (
-                    <SelectItem key={bag.id} value={bag.id.toString()}>
-                      {bag.roaster} - {bag.origin}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {field.state.meta.errors.length > 0 &&
-                field.state.meta.isTouched && (
-                  <FieldDescription>
-                    {field.state.meta.errors[0]?.message}
-                  </FieldDescription>
-                )}
-            </Field>
-          )}
+                  <SelectTrigger
+                    aria-invalid={
+                      field.state.meta.errors.length > 0 &&
+                      field.state.meta.isTouched
+                    }
+                    id="coffeeBagId"
+                  >
+                    <SelectValue placeholder="Select a coffee bag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coffeeBags.map((bag) => (
+                      <SelectItem key={bag.id} value={bag.id.toString()}>
+                        {bag.roaster} - {bag.origin}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {field.state.meta.errors.length > 0 &&
+                  field.state.meta.isTouched && (
+                    <FieldDescription>
+                      {field.state.meta.errors[0]?.message}
+                    </FieldDescription>
+                  )}
+              </Field>
+            );
+          }}
         </form.Field>
       </div>
 

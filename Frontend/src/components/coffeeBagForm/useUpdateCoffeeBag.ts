@@ -1,33 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
+import { CoffeeBagUpdateRequest } from '@/api/coffeeBags/coffeeRequestSchemas';
 
 interface UseUpdateCoffeeBagOptions {
   onSuccess?: () => void;
 }
 
-export function useUpdateCoffeeBag({ onSuccess }: UseUpdateCoffeeBagOptions = {}) {
+export function useUpdateCoffeeBag({
+  onSuccess,
+}: UseUpdateCoffeeBagOptions = {}) {
   const queryClient = useQueryClient();
 
   const updateCoffeeBagMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: { emptied?: string; roaster?: string; origin?: string; roastStyle?: string; flavourNotes?: string };
-    }) => apiClients.coffeeBag.updateCoffeeBag(id, data),
-    onSuccess: async (updatedCoffeeBag, { id }) => {
-      await queryClient.setQueryData(
-        ['coffeeBags', false],
-        (old: Array<CoffeeBag> | undefined) =>
-          old?.map((bag) => (bag.id === id ? updatedCoffeeBag : bag)),
-      );
-      await queryClient.setQueryData(
-        ['coffeeBags', true],
-        (old: Array<CoffeeBag> | undefined) =>
-          old?.map((bag) => (bag.id === id ? updatedCoffeeBag : bag)),
-      );
+    mutationFn: ({ id, data }: { id: number; data: CoffeeBagUpdateRequest }) =>
+      apiClients.coffeeBag.updateCoffeeBag(id, data),
+    onSuccess: async () => {
+      // Refetch every bag list so filtering by `emptied` stays server-side
+      // truth, e.g. an emptied bag drops out of the create brew dropdown.
+      await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess?.();
     },
   });

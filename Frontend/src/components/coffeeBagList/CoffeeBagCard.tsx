@@ -7,7 +7,9 @@ import { useUpdateCoffeeBag } from '@/components/coffeeBagForm/useUpdateCoffeeBa
 type ConfirmAction = 'open' | 'empty';
 
 export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
+    null,
+  );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { mutate: updateBag, isLoading } = useUpdateCoffeeBag({});
 
@@ -28,13 +30,16 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
       }, 5000);
     } else {
       const now = new Date();
-      const midnightUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)).toISOString();
-      const data = action === 'empty'
-        ? { emptied: now.toISOString() }
-        : { opened: midnightUtc };
+      const midnightUtc = new Date(
+        Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0),
+      ).toISOString();
+      const data =
+        action === 'empty'
+          ? { emptied: now.toISOString() }
+          : { opened: midnightUtc };
 
       updateBag(
-        { id: coffeeBag.id, data },
+        { id: coffeeBag.id, data: { ...coffeeBag, ...data } },
         {
           onSuccess: () => {
             setConfirmAction(null);

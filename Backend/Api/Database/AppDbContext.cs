@@ -7,6 +7,36 @@ namespace Api.Database
   {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+      StampAuditFields();
+      return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Keeps the audit columns populated. Without this, CreatedOn/LastModifiedOn
+    /// stay NULL for anything written through the API, which makes CreatedOn useless
+    /// as a list-ordering tiebreaker for coffee bags.
+    /// </summary>
+    private void StampAuditFields()
+    {
+      var now = DateTime.UtcNow;
+
+      foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+      {
+        switch (entry.State)
+        {
+          case EntityState.Added:
+            // Preserve an explicitly supplied value, e.g. from SeedData.
+            entry.Entity.CreatedOn ??= now;
+            break;
+          case EntityState.Modified:
+            entry.Entity.LastModifiedOn = now;
+            break;
+        }
+      }
+    }
+
     public DbSet<UserEntity> Users { get; set; } = null!;
     public DbSet<BrewEntity> Brews { get; set; } = null!;
     public DbSet<CoffeeBagEntity> CoffeeBags { get; set; } = null!;
