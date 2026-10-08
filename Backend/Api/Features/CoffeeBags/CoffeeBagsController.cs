@@ -50,9 +50,7 @@ public class CoffeeBagsController : BaseController
 
     var coffeeBags = await query
       .Include(cb => cb.Brews)
-      .OrderByDescending(cb => cb.Emptied)
-      .ThenByDescending(cb => cb.Opened)
-      .ThenByDescending(cb => cb.CreatedOn)
+      .OrderByDescending(cb => cb.Emptied ?? cb.Opened ?? cb.CreatedOn)
       .ThenByDescending(cb => cb.Id)
       .ToListAsync();
 
