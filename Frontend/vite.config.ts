@@ -6,7 +6,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
-const config = defineConfig({
+const config = defineConfig(({ mode }) => ({
   // Bind all interfaces so the dev server is reachable from other devices
   // on the LAN via this machine's IP address.
   server: {
@@ -14,7 +14,7 @@ const config = defineConfig({
     port: 3000,
   },
   plugins: [
-    devtools(),
+    ...(mode === 'development' ? [devtools()] : []),
     nitro(),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
@@ -24,6 +24,6 @@ const config = defineConfig({
     tanstackStart(),
     viteReact(),
   ],
-})
+}))
 
 export default config

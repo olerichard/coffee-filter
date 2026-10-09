@@ -27,6 +27,11 @@ class AuthService {
     localStorage.removeItem('auth_token');
   }
 
+  clearSession(): void {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+  }
+
   getToken(): string | null {
     return localStorage.getItem('auth_token');
   }

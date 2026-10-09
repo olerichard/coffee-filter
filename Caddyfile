@@ -1,0 +1,6 @@
+coffee-filter.olerichard.no {
+  encode zstd gzip
+
+  reverse_proxy /api/* api:5186
+  reverse_proxy web:3000
+}

@@ -23,7 +23,15 @@ namespace Api.Core.Auth
     public string GenerateToken(UserEntity user)
     {
       var jwtSettings = _configuration.GetSection("JwtSettings");
-      var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
+      var secretKey = jwtSettings["SecretKey"];
+      if (string.IsNullOrWhiteSpace(secretKey))
+      {
+        throw new InvalidOperationException(
+          "JWT signing key missing. For local development, copy Backend/Api/appsettings.Development.example.json " +
+          "to Backend/Api/appsettings.Development.json and set JwtSettings:SecretKey. " +
+          "Production should set JwtSettings__SecretKey as an environment variable.");
+      }
+
       var issuer = jwtSettings["Issuer"] ?? "CoffeeFilter";
       var audience = jwtSettings["Audience"] ?? "CoffeeFilterUsers";
 
@@ -33,7 +41,10 @@ namespace Api.Core.Auth
       Console.WriteLine($"JWT issuer: {issuer}");
       Console.WriteLine($"JWT audience: {audience}");
 
-      var key = new SymmetricSecurityKey(secretKeyBytes);
+      var key = new SymmetricSecurityKey(secretKeyBytes)
+      {
+        KeyId = "coffee-filter"
+      };
       var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
       var claims = new[]

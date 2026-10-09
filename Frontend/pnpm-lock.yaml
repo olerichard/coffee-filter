@@ -60,7 +60,7 @@ importers:
         specifier: ^0.544.0
         version: 0.544.0(react@19.3.0)
       nitro:
-        specifier: latest
+        specifier: 3.0.260903-beta
         version: 3.0.260903-beta
       radix-ui:
         specifier: ^1.4.3

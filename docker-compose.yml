@@ -1,0 +1,52 @@
+name: coffee-filter
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  api:
+    image: ghcr.io/olerichard/coffee-filter-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5186
+      ConnectionStrings__DefaultConnection: Data Source=/data/coffee-filter.db
+      Cors__AllowedOrigins__0: https://coffee-filter.olerichard.no
+      JwtSettings__Issuer: coffee-filter.olerichard.no
+      JwtSettings__Audience: coffee-filter-users
+      Seed__DemoData: "false"
+    volumes:
+      - /mnt/coffee-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:5186/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    image: ghcr.io/olerichard/coffee-filter-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+
+volumes:
+  caddy_data:
+  caddy_config:

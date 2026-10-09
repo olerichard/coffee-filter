@@ -4,6 +4,7 @@ using Api.Database.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,6 +20,18 @@ using System.Security.Claims;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    // The production app runs behind Caddy in Docker. The proxy container IP can
+    // change, so trust forwarded headers from the Docker network instead of
+    // hard-coding one proxy address.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 // Add services to the container.
 
 // Resolve the SQLite file path once so the connection string and the
@@ -52,10 +65,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
+        var secretKey = jwtSettings["SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new InvalidOperationException(GetMissingJwtSecretMessage());
+        }
+
         var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
 
-        options.IncludeErrorDetails = true;
+        options.IncludeErrorDetails = builder.Environment.IsDevelopment();
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -156,6 +174,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseForwardedHeaders();
+
 // Only enforce HTTPS for loopback clients. Requests arriving on the machine's LAN
 // address stay on plain HTTP, which avoids untrusted dev-certificate warnings.
 app.UseWhen(
@@ -177,11 +197,12 @@ using (var scope = app.Services.CreateScope())
     await context.Database.MigrateAsync();
     
     // Apply seed data
-    await SeedData.InitializeAsync(context);
+    await SeedData.InitializeAsync(context, app.Configuration);
     
 }
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 
@@ -242,3 +263,8 @@ void CreateDatabaseDirectoryWithPermissions(string databaseFilePath)
 static bool IsLoopbackHost(string host) =>
     host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
     (IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address));
+
+static string GetMissingJwtSecretMessage() =>
+    "JWT signing key missing. For local development, copy Backend/Api/appsettings.Development.example.json " +
+    "to Backend/Api/appsettings.Development.json and set JwtSettings:SecretKey. " +
+    "Production should set JwtSettings__SecretKey as an environment variable.";

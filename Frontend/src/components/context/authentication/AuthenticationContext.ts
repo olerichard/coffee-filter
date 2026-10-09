@@ -1,12 +1,13 @@
 import React, {
   createContext,
   useContext,
-  useReducer,
   useEffect,
-  ReactNode,
+  useReducer,
 } from 'react'
-import { AuthState, AuthContextType, AuthAction, User } from './auth.types'
 import { authService } from './auth.service'
+import type { ReactNode } from 'react'
+import type { AuthAction, AuthContextType, AuthState, User } from './auth.types'
+import { AUTH_UNAUTHORIZED_EVENT } from '@/api/base/apiClient'
 
 const initialState: AuthState = {
   user: null,
@@ -71,6 +72,13 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      authService.clearSession()
+      dispatch({ type: 'LOGOUT' })
+    }
+
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized)
+
     const token = authService.getToken()
     if (token && authService.isTokenValid(token)) {
       const storedUser = localStorage.getItem('auth_user')
@@ -83,14 +91,18 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         })
       } else {
         dispatch({ type: 'AUTH_FAILURE' })
-        authService.removeToken()
+        authService.clearSession()
       }
     } else {
-      authService.removeToken()
+      authService.clearSession()
       dispatch({
         type: 'INIT_FROM_STORAGE',
         payload: { user: null, token: null },
       })
+    }
+
+    return () => {
+      window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized)
     }
   }, [])
 
@@ -119,8 +131,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
   }
 
   const logout = () => {
-    authService.removeToken()
-    localStorage.removeItem('auth_user')
+    authService.clearSession()
     dispatch({ type: 'LOGOUT' })
   }
 

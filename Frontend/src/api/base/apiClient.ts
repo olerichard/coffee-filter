@@ -1,10 +1,12 @@
-import type { ZodType } from 'zod';
 import { API_BASE_URL } from './apiConfig';
+import type { ZodType } from 'zod';
+
+export const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized';
 
 class ApiClient {
   private BASE_URL = API_BASE_URL;
 
-  buildUrl(...args: string[]) {
+  buildUrl(...args: Array<string>) {
     return args.length === 0
       ? this.BASE_URL
       : `${this.BASE_URL}/${args.join('/')}`;
@@ -36,6 +38,12 @@ class ApiClient {
         body: body ? JSON.stringify(body) : null,
       }),
     );
+
+    if (res.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+    }
 
     if (!res.ok) throw res;
 
