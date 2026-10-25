@@ -9,11 +9,14 @@ namespace Api.Database
     {
         private static readonly Random _random = new();
 
-        public static async Task InitializeAsync(AppDbContext context, IConfiguration configuration)
+        public static async Task InitializeAsync(
+            AppDbContext context,
+            IConfiguration configuration,
+            IPasswordHasher<UserEntity> passwordHasher)
         {
             await context.Database.EnsureCreatedAsync();
 
-            var adminUser = await EnsureAdminUserAsync(context, configuration);
+            var adminUser = await EnsureAdminUserAsync(context, configuration, passwordHasher);
             var seedDemoData = configuration.GetValue("Seed:DemoData", false);
 
             if (!await context.BrewMethods.AnyAsync())
@@ -110,7 +113,10 @@ namespace Api.Database
             await SeedEquipmentAsync(context, adminUser.Username, seedDemoData);
         }
 
-        private static async Task<UserEntity> EnsureAdminUserAsync(AppDbContext context, IConfiguration configuration)
+        private static async Task<UserEntity> EnsureAdminUserAsync(
+            AppDbContext context,
+            IConfiguration configuration,
+            IPasswordHasher<UserEntity> passwordHasher)
         {
             var existingUser = await context.Users.OrderBy(u => u.Id).FirstOrDefaultAsync();
             if (existingUser is not null)
@@ -139,7 +145,7 @@ namespace Api.Database
                 IsActive = true,
                 CreatedBy = username,
                 LastModifiedBy = username,
-                PasswordHash = new PasswordHasher<UserEntity>().HashPassword(null!, password)
+                PasswordHash = passwordHasher.HashPassword(null!, password)
             };
 
             context.Users.Add(adminUser);

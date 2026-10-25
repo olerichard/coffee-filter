@@ -1,5 +1,7 @@
 import { API_BASE_URL } from './apiConfig';
 import type { ZodType } from 'zod';
+import { refreshSession } from '@/api/auth/sessionRefresh';
+import { tokenStore } from '@/api/auth/tokenStore';
 
 export const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized';
 
@@ -17,7 +19,7 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
 
-    const token = localStorage.getItem('auth_token');
+    const token = tokenStore.getAccessToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -28,27 +30,54 @@ class ApiClient {
   async fetch<T extends unknown>(
     method: 'PUT' | 'POST' | 'GET' | 'DELETE',
     url: string,
-    body: Record<string, unknown> | null,
+    body: unknown,
     schema: ZodType | null,
   ) {
-    const res = await fetch(
+    let response = await this.send(method, url, body);
+
+    if (response.status === 401 && typeof window !== 'undefined') {
+      const refreshed = await refreshSession();
+
+      if (refreshed) {
+        response = await this.send(method, url, body);
+      }
+    }
+
+    if (response.status === 401) {
+      tokenStore.clear();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+      }
+    }
+
+    if (!response.ok) throw response;
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    const data = JSON.parse(text);
+    return (schema ? schema.parse(data) : data) as T;
+  }
+
+  private send(
+    method: 'PUT' | 'POST' | 'GET' | 'DELETE',
+    url: string,
+    body: unknown,
+  ) {
+    return fetch(
       new Request(url, {
         headers: this.getHeaders(),
         method: method,
         body: body ? JSON.stringify(body) : null,
       }),
     );
-
-    if (res.status === 401) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
-    }
-
-    if (!res.ok) throw res;
-
-    const data = await res.json();
-    return (schema ? schema.parse(data) : data) as T;
   }
 }
 

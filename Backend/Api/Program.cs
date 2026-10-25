@@ -1,26 +1,75 @@
-
+using Api.Core;
+using Api.Core.Auth;
 using Api.Database;
 using Api.Database.Entities;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.HttpOverrides;
-using Scalar.AspNetCore;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Net;
-using Microsoft.Data.Sqlite;
-using Microsoft.IdentityModel.Tokens;
-using Api.Core.Auth;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+
+builder.Services.AddOptions<JwtSettings>()
+    .Bind(builder.Configuration.GetSection(JwtSettings.SectionName))
+    .Validate(
+        settings => !string.IsNullOrWhiteSpace(settings.SecretKey)
+            && Encoding.UTF8.GetByteCount(settings.SecretKey) >= 32,
+        "JwtSettings:SecretKey must be at least 32 bytes (256 bits).")
+    .Validate(
+        settings => !string.IsNullOrWhiteSpace(settings.Issuer),
+        "JwtSettings:Issuer is required.")
+    .Validate(
+        settings => !string.IsNullOrWhiteSpace(settings.Audience),
+        "JwtSettings:Audience is required.")
+    .Validate(
+        settings => settings.AccessTokenMinutes > 0,
+        "JwtSettings:AccessTokenMinutes must be positive.")
+    .Validate(
+        settings => settings.RefreshTokenDays > 0,
+        "JwtSettings:RefreshTokenDays must be positive.")
+    .Validate(
+        settings => settings.RefreshTokenAbsoluteDays >= settings.RefreshTokenDays,
+        "JwtSettings:RefreshTokenAbsoluteDays must be greater than or equal to RefreshTokenDays.")
+    .Validate(
+        settings => settings.RefreshReuseGraceSeconds >= 0,
+        "JwtSettings:RefreshReuseGraceSeconds cannot be negative.")
+    .Validate(
+        settings => !string.IsNullOrWhiteSpace(settings.RefreshCookieName),
+        "JwtSettings:RefreshCookieName is required.")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<LockoutSettings>()
+    .Bind(builder.Configuration.GetSection(LockoutSettings.SectionName))
+    .Validate(
+        settings => settings.MaxFailedAttempts > 0,
+        "Lockout:MaxFailedAttempts must be positive.")
+    .Validate(
+        settings => settings.DurationMinutes > 0,
+        "Lockout:DurationMinutes must be positive.")
+    .ValidateOnStart();
+
+builder.Services.Configure<CorsSettings>(
+    builder.Configuration.GetSection(CorsSettings.SectionName));
+
+var corsSettings = builder.Configuration
+    .GetSection(CorsSettings.SectionName)
+    .Get<CorsSettings>() ?? new CorsSettings();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -32,7 +81,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
-// Add services to the container.
 
 // Resolve the SQLite file path once so the connection string and the
 // directory creation below can never disagree.
@@ -43,64 +91,82 @@ var databaseFilePath = new SqliteConnectionStringBuilder(connectionString).DataS
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            if (allowedOrigins.Length > 0)
+            // Without explicit origins, cross-origin access stays disabled.
+            // Never combine AllowAnyOrigin with credentials.
+            if (corsSettings.AllowedOrigins.Length == 0)
             {
-                policy.WithOrigins(allowedOrigins);
+                return;
             }
 
-            policy.AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(corsSettings.AllowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials()
+                  .WithExposedHeaders("X-Refresh-Retry");
         });
 });
 
-// Add authentication services
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer();
+
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtSettings>>((options, jwtOptions) =>
     {
-        var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"];
-        if (string.IsNullOrWhiteSpace(secretKey))
+        var jwtSettings = jwtOptions.Value;
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
         {
-            throw new InvalidOperationException(GetMissingJwtSecretMessage());
-        }
+            KeyId = "coffee-filter"
+        };
 
-        var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
-
+        options.MapInboundClaims = false;
         options.IncludeErrorDetails = builder.Environment.IsDevelopment();
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = jwtSettings["Issuer"],
+            ValidIssuer = jwtSettings.Issuer,
             ValidateAudience = true,
-            ValidAudience = jwtSettings["Audience"],
+            ValidAudience = jwtSettings.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes)
+            IssuerSigningKey = signingKey,
+            RequireExpirationTime = true,
+            RequireSignedTokens = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            NameClaimType = JwtRegisteredClaimNames.Name
         };
 
         options.Events = new JwtBearerEvents
         {
+            OnTokenValidated = context =>
+            {
+                var sessionId = context.Principal?
+                    .FindFirst(AuthClaimTypes.SessionId)?.Value;
+
+                // Tokens issued before the refresh-token system have no session
+                // claim and must not be accepted.
+                if (!Guid.TryParse(sessionId, out _))
+                {
+                    context.Fail("Access token is missing a valid session identifier.");
+                }
+
+                return Task.CompletedTask;
+            },
             OnAuthenticationFailed = context =>
             {
                 var logger = context.HttpContext.RequestServices
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JwtBearer");
 
-                var keyFingerprint = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(secretKeyBytes));
-
-                logger.LogError(context.Exception,
-                    "JWT authentication failed. Scheme={Scheme}. KeyFingerprint(SHA256)={KeyFingerprint}. AuthorizationHeader={AuthorizationHeader}",
-                    context.Scheme.Name,
-                    keyFingerprint,
-                    context.Request.Headers.Authorization.ToString());
+                logger.LogWarning(
+                    context.Exception,
+                    "JWT authentication failed. Scheme={Scheme}.",
+                    context.Scheme.Name);
 
                 return Task.CompletedTask;
             },
@@ -111,34 +177,64 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .CreateLogger("JwtBearer");
 
                 logger.LogWarning(
-                    "JWT challenge. Error={Error}. ErrorDescription={ErrorDescription}. AuthorizationHeader={AuthorizationHeader}",
-                    context.Error,
-                    context.ErrorDescription,
-                    context.Request.Headers.Authorization.ToString());
-
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                var logger = context.HttpContext.RequestServices
-                    .GetRequiredService<ILoggerFactory>()
-                    .CreateLogger("JwtBearer");
-
-                logger.LogInformation(
-                    "JWT token validated. Subject={Subject}. Name={Name}",
-                    context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value,
-                    context.Principal?.FindFirst(JwtRegisteredClaimNames.Name)?.Value);
+                    "JWT challenge. Error={Error}.",
+                    context.Error);
 
                 return Task.CompletedTask;
             }
         };
     });
 
-// Add password hasher and JWT service
+builder.Services.AddOptions<PasswordHasherOptions>()
+    .Configure(options =>
+    {
+        options.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV3;
+        options.IterationCount = 600_000;
+    });
+
 builder.Services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
+builder.Services.AddSingleton<DummyPasswordHash>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddSingleton<RefreshTokenCookieService>();
+builder.Services.AddHostedService<RefreshTokenCleanupService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitPolicies.Login, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.Refresh, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.PasswordChange, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0
+            }));
+});
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -150,15 +246,15 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddControllers().AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-            options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-            // Always serialize DateTime as UTC (ISO 8601 with Z suffix)
-            options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
-            // Serialize enums as camelCase strings (e.g. "espresso")
-            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
-        });
-        
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    // Always serialize DateTime as UTC (ISO 8601 with Z suffix)
+    options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+    // Serialize enums as camelCase strings (e.g. "espresso")
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
@@ -176,13 +272,20 @@ if (app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders();
 
-// Only enforce HTTPS for loopback clients. Requests arriving on the machine's LAN
-// address stay on plain HTTP, which avoids untrusted dev-certificate warnings.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// Redirect non-loopback hosts to HTTPS when an HTTPS endpoint is configured.
+// Loopback traffic stays on HTTP so local development does not require a
+// trusted development certificate.
 app.UseWhen(
     context => !IsLoopbackHost(context.Request.Host.Host),
     branch => branch.UseHttpsRedirection());
-app.UseCors("AllowReactApp");
 
+app.UseCors("AllowReactApp");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -192,13 +295,14 @@ CreateDatabaseDirectoryWithPermissions(databaseFilePath);
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    
+
     // Apply migrations (auto-apply strategy for both dev and production)
     await context.Database.MigrateAsync();
-    
+
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<UserEntity>>();
+
     // Apply seed data
-    await SeedData.InitializeAsync(context, app.Configuration);
-    
+    await SeedData.InitializeAsync(context, app.Configuration, passwordHasher);
 }
 
 app.MapControllers();
@@ -263,8 +367,3 @@ void CreateDatabaseDirectoryWithPermissions(string databaseFilePath)
 static bool IsLoopbackHost(string host) =>
     host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
     (IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address));
-
-static string GetMissingJwtSecretMessage() =>
-    "JWT signing key missing. For local development, copy Backend/Api/appsettings.Development.example.json " +
-    "to Backend/Api/appsettings.Development.json and set JwtSettings:SecretKey. " +
-    "Production should set JwtSettings__SecretKey as an environment variable.";

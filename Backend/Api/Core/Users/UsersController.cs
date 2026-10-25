@@ -35,17 +35,7 @@ namespace Api.Core.Users
         return NotFound();
       }
 
-      var userDto = new UserDto
-      {
-        Id = user.Id,
-        Username = user.Username,
-        Email = user.Email,
-        DisplayName = user.DisplayName,
-        IsActive = user.IsActive,
-        LastLoginAt = user.LastLoginAt
-      };
-
-      return Ok(userDto);
+      return Ok(user.ToUserDto());
     }
   }
 }

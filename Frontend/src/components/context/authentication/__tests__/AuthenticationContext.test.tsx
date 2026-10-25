@@ -1,48 +1,58 @@
-import { render, screen } from '@testing-library/react'
-import { useAuth } from '../AuthenticationContext'
-import { AuthenticationProvider } from '../AuthenticationContext'
+import { describe, expect, it } from 'vitest';
+import { authReducer } from '../AuthenticationContext';
+import type { AuthState, User } from '../auth.types';
 
-function TestComponent() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+const testUser: User = {
+  id: 1,
+  username: 'testadmin',
+  email: 'test@example.com',
+  displayName: 'Test Admin',
+  isActive: true,
+  lastLoginAt: null,
+};
 
-  return (
-    <div>
-      <div data-testid="loading">{isLoading.toString()}</div>
-      <div data-testid="authenticated">{isAuthenticated.toString()}</div>
-      <div data-testid="user">{user?.username || 'no user'}</div>
-    </div>
-  )
-}
+const signedOutState: AuthState = {
+  user: null,
+  isLoading: false,
+  isAuthenticated: false,
+};
 
-// Simple test without vitest describe
-export async function testAuthContext() {
-  console.log('Testing authentication context...')
+const signedInState: AuthState = {
+  user: testUser,
+  isLoading: false,
+  isAuthenticated: true,
+};
 
-  // Test initial state
-  const { unmount } = render(
-    <AuthenticationProvider>
-      <TestComponent />
-    </AuthenticationProvider>,
-  )
+describe('authReducer', () => {
+  it('marks the session as loading on AUTH_START', () => {
+    const state = authReducer(signedOutState, { type: 'AUTH_START' });
 
-  console.log(
-    'Initial loading state:',
-    screen.getByTestId('loading').textContent,
-  )
-  console.log(
-    'Initial authenticated state:',
-    screen.getByTestId('authenticated').textContent,
-  )
-  console.log('Initial user state:', screen.getByTestId('user').textContent)
+    expect(state.isLoading).toBe(true);
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.user).toBeNull();
+  });
 
-  // Wait for initial state to resolve
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  it('stores the user on AUTH_SUCCESS', () => {
+    const state = authReducer(
+      { ...signedOutState, isLoading: true },
+      { type: 'AUTH_SUCCESS', payload: { user: testUser } },
+    );
 
-  unmount()
-  console.log('Authentication context test completed successfully!')
-}
+    expect(state).toEqual(signedInState);
+  });
 
-// Run test if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  testAuthContext().catch(console.error)
-}
+  it('clears the user on AUTH_FAILURE', () => {
+    const state = authReducer(
+      { ...signedInState, isLoading: true },
+      { type: 'AUTH_FAILURE' },
+    );
+
+    expect(state).toEqual(signedOutState);
+  });
+
+  it('clears the user on LOGOUT', () => {
+    const state = authReducer(signedInState, { type: 'LOGOUT' });
+
+    expect(state).toEqual(signedOutState);
+  });
+});

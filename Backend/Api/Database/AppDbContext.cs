@@ -43,6 +43,7 @@ namespace Api.Database
     public DbSet<BrewMethodEntity> BrewMethods { get; set; } = null!;
     public DbSet<GrinderModelEntity> GrinderModels { get; set; } = null!;
     public DbSet<UserEquipmentEntity> UserEquipment { get; set; } = null!;
+    public DbSet<RefreshTokenEntity> RefreshTokens { get; set; } = null!;
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -118,6 +119,39 @@ namespace Api.Database
       modelBuilder.Entity<UserEquipmentEntity>()
         .HasIndex(ue => new { ue.UserId, ue.GrinderModelId })
         .IsUnique();
+
+      // Refresh tokens are stored as hashes. The raw value only ever exists in
+      // the client's HttpOnly cookie.
+      modelBuilder.Entity<RefreshTokenEntity>(entity =>
+      {
+        entity.Property(t => t.TokenHash)
+          .HasMaxLength(64)
+          .IsRequired();
+
+        entity.Property(t => t.ReplacedByTokenHash)
+          .HasMaxLength(64);
+
+        entity.Property(t => t.RevokedReason)
+          .HasMaxLength(32);
+
+        entity.Property(t => t.CreatedByIp)
+          .HasMaxLength(45);
+
+        entity.Property(t => t.UserAgent)
+          .HasMaxLength(512);
+
+        entity.HasIndex(t => t.TokenHash)
+          .IsUnique();
+
+        entity.HasIndex(t => new { t.UserId, t.FamilyId });
+        entity.HasIndex(t => t.FamilyId);
+        entity.HasIndex(t => t.ExpiresAt);
+
+        entity.HasOne(t => t.User)
+          .WithMany(u => u.RefreshTokens)
+          .HasForeignKey(t => t.UserId)
+          .OnDelete(DeleteBehavior.Cascade);
+      });
     }
   }
 }

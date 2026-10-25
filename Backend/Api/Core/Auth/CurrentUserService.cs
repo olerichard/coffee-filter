@@ -8,6 +8,7 @@ namespace Api.Core.Auth
   {
     int? GetCurrentUserId();
     string? GetCurrentUserName();
+    Guid? GetCurrentSessionId();
     bool IsAuthenticated();
   }
 
@@ -44,6 +45,14 @@ namespace Api.Core.Auth
 
       return user.FindFirstValue(JwtRegisteredClaimNames.Name)
         ?? user.FindFirstValue(ClaimTypes.Name);
+    }
+
+    public Guid? GetCurrentSessionId()
+    {
+      var sessionIdValue = _httpContextAccessor.HttpContext?.User?
+        .FindFirstValue(AuthClaimTypes.SessionId);
+
+      return Guid.TryParse(sessionIdValue, out var sessionId) ? sessionId : null;
     }
 
     public bool IsAuthenticated()

@@ -1,68 +1,66 @@
 namespace Api.Core.Auth
 {
   using Api.Database.Entities;
+  using Microsoft.Extensions.Options;
   using Microsoft.IdentityModel.Tokens;
+  using System.Globalization;
   using System.IdentityModel.Tokens.Jwt;
   using System.Security.Claims;
   using System.Text;
 
+  public sealed record AccessTokenResult(string Token, DateTime ExpiresAt);
+
   public interface IJwtService
   {
-    string GenerateToken(UserEntity user);
+    AccessTokenResult GenerateToken(UserEntity user, Guid sessionId);
   }
 
   public class JwtService : IJwtService
   {
-    private readonly IConfiguration _configuration;
+    private static readonly JwtSecurityTokenHandler TokenHandler = new();
 
-    public JwtService(IConfiguration configuration)
+    private readonly JwtSettings _settings;
+    private readonly TimeProvider _timeProvider;
+
+    public JwtService(IOptions<JwtSettings> settings, TimeProvider timeProvider)
     {
-      _configuration = configuration;
+      _settings = settings.Value;
+      _timeProvider = timeProvider;
     }
 
-    public string GenerateToken(UserEntity user)
+    public AccessTokenResult GenerateToken(UserEntity user, Guid sessionId)
     {
-      var jwtSettings = _configuration.GetSection("JwtSettings");
-      var secretKey = jwtSettings["SecretKey"];
-      if (string.IsNullOrWhiteSpace(secretKey))
-      {
-        throw new InvalidOperationException(
-          "JWT signing key missing. For local development, copy Backend/Api/appsettings.Development.example.json " +
-          "to Backend/Api/appsettings.Development.json and set JwtSettings:SecretKey. " +
-          "Production should set JwtSettings__SecretKey as an environment variable.");
-      }
+      var now = _timeProvider.GetUtcNow();
+      var expiresAt = now.AddMinutes(_settings.AccessTokenMinutes);
 
-      var issuer = jwtSettings["Issuer"] ?? "CoffeeFilter";
-      var audience = jwtSettings["Audience"] ?? "CoffeeFilterUsers";
-
-      var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
-      var keyFingerprint = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(secretKeyBytes));
-      Console.WriteLine($"JWT signing key fingerprint (SHA256): {keyFingerprint}");
-      Console.WriteLine($"JWT issuer: {issuer}");
-      Console.WriteLine($"JWT audience: {audience}");
-
-      var key = new SymmetricSecurityKey(secretKeyBytes)
+      var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey))
       {
         KeyId = "coffee-filter"
       };
-      var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+      var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
       var claims = new[]
       {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString(CultureInfo.InvariantCulture)),
         new Claim(JwtRegisteredClaimNames.Name, user.Username),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
+        new Claim(AuthClaimTypes.SessionId, sessionId.ToString("N")),
+        new Claim(
+          JwtRegisteredClaimNames.Iat,
+          now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
+          ClaimValueTypes.Integer64)
       };
 
       var token = new JwtSecurityToken(
-        issuer: issuer,
-        audience: audience,
+        issuer: _settings.Issuer,
+        audience: _settings.Audience,
         claims: claims,
-        expires: DateTime.UtcNow.AddDays(7),
-        signingCredentials: credentials
-      );
+        notBefore: now.UtcDateTime,
+        expires: expiresAt.UtcDateTime,
+        signingCredentials: credentials);
 
-      return new JwtSecurityTokenHandler().WriteToken(token);
+      return new AccessTokenResult(TokenHandler.WriteToken(token), expiresAt.UtcDateTime);
     }
   }
 }

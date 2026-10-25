@@ -1,160 +1,184 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-} from 'react'
-import { authService } from './auth.service'
-import type { ReactNode } from 'react'
-import type { AuthAction, AuthContextType, AuthState, User } from './auth.types'
-import { AUTH_UNAUTHORIZED_EVENT } from '@/api/base/apiClient'
+import React, { createContext, useContext, useEffect, useReducer } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import type {
+  AuthAction,
+  AuthContextType,
+  AuthState,
+  LoginRequest,
+} from './auth.types';
+import { authClient } from '@/api/auth/authClient';
+import { broadcastLogout, subscribeToLogout } from '@/api/auth/authChannel';
+import { tokenStore } from '@/api/auth/tokenStore';
+import { AUTH_UNAUTHORIZED_EVENT } from '@/api/base/apiClient';
 
 const initialState: AuthState = {
   user: null,
-  token: null,
   isLoading: true,
   isAuthenticated: false,
-}
+};
 
-function authReducer(state: AuthState, action: AuthAction): AuthState {
+export function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'AUTH_START':
       return {
         ...state,
         isLoading: true,
-      }
+      };
     case 'AUTH_SUCCESS':
       return {
         ...state,
         user: action.payload.user,
-        token: action.payload.token,
         isLoading: false,
         isAuthenticated: true,
-      }
+      };
     case 'AUTH_FAILURE':
       return {
         ...state,
         user: null,
-        token: null,
         isLoading: false,
         isAuthenticated: false,
-      }
+      };
     case 'LOGOUT':
       return {
         ...state,
         user: null,
-        token: null,
         isLoading: false,
         isAuthenticated: false,
-      }
-    case 'INIT_FROM_STORAGE':
-      return {
-        ...state,
-        user: action.payload.user,
-        token: action.payload.token,
-        isLoading: false,
-        isAuthenticated: !!action.payload.token && !!action.payload.user,
-      }
+      };
     default:
-      return state
+      return state;
   }
 }
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 const AuthenticationContext = createContext<AuthContextType | undefined>(
   undefined,
-)
+);
 
 export function AuthenticationProvider({ children }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Remove tokens written by the old localStorage-based implementation.
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+
     const handleUnauthorized = () => {
-      authService.clearSession()
-      dispatch({ type: 'LOGOUT' })
-    }
+      tokenStore.clear();
+      queryClient.clear();
+      broadcastLogout();
+      dispatch({ type: 'LOGOUT' });
+    };
 
-    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized)
+    const unsubscribeFromLogout = subscribeToLogout(() => {
+      tokenStore.clear();
+      queryClient.clear();
+      dispatch({ type: 'LOGOUT' });
+    });
 
-    const token = authService.getToken()
-    if (token && authService.isTokenValid(token)) {
-      const storedUser = localStorage.getItem('auth_user')
-      const user: User | null = storedUser ? JSON.parse(storedUser) : null
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
 
-      if (user) {
-        dispatch({
-          type: 'INIT_FROM_STORAGE',
-          payload: { user, token },
-        })
-      } else {
-        dispatch({ type: 'AUTH_FAILURE' })
-        authService.clearSession()
+    const restoreSession = async () => {
+      try {
+        const response = await authClient.refresh();
+
+        if (response) {
+          queryClient.clear();
+          dispatch({
+            type: 'AUTH_SUCCESS',
+            payload: { user: response.user },
+          });
+        } else {
+          tokenStore.clear();
+          queryClient.clear();
+          dispatch({ type: 'AUTH_FAILURE' });
+        }
+      } catch {
+        // A network failure must not destroy the refresh cookie. The user can
+        // reload or sign in again without losing the underlying session.
+        tokenStore.clear();
+        queryClient.clear();
+        dispatch({ type: 'AUTH_FAILURE' });
       }
-    } else {
-      authService.clearSession()
-      dispatch({
-        type: 'INIT_FROM_STORAGE',
-        payload: { user: null, token: null },
-      })
-    }
+    };
+
+    void restoreSession();
 
     return () => {
-      window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized)
-    }
-  }, [])
+      window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+      unsubscribeFromLogout();
+    };
+  }, [queryClient]);
 
-  const login = async (credentials: { username: string; password: string }) => {
-    dispatch({ type: 'AUTH_START' })
+  const login = async (credentials: LoginRequest) => {
+    queryClient.clear();
+    dispatch({ type: 'AUTH_START' });
 
     try {
-      const response = await authService.login(credentials)
-      const user: User = {
-        username: response.username,
-        email: response.email,
-        displayName: response.displayName,
-      }
+      const response = await authClient.login(credentials);
 
-      authService.storeToken(response.token)
-      localStorage.setItem('auth_user', JSON.stringify(user))
+      // A login in one tab replaces the shared refresh cookie. Sign out other
+      // tabs so they cannot keep acting as the previous user.
+      broadcastLogout();
 
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token: response.token },
-      })
+        payload: { user: response.user },
+      });
     } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' })
-      throw error
+      dispatch({ type: 'AUTH_FAILURE' });
+      throw error;
     }
-  }
+  };
 
-  const logout = () => {
-    authService.clearSession()
-    dispatch({ type: 'LOGOUT' })
-  }
+  const logout = async () => {
+    try {
+      await authClient.logout();
+    } finally {
+      queryClient.clear();
+      broadcastLogout();
+      dispatch({ type: 'LOGOUT' });
+    }
+  };
+
+  const logoutAll = async () => {
+    try {
+      await authClient.logoutAll();
+    } finally {
+      queryClient.clear();
+      broadcastLogout();
+      dispatch({ type: 'LOGOUT' });
+    }
+  };
 
   const contextValue: AuthContextType = {
     state,
     login,
     logout,
+    logoutAll,
     isLoading: state.isLoading,
     isAuthenticated: state.isAuthenticated,
     user: state.user,
-  }
+  };
 
   return React.createElement(
     AuthenticationContext.Provider,
     { value: contextValue },
     children,
-  )
+  );
 }
 
 export function useAuth(): AuthContextType {
-  const context = useContext(AuthenticationContext)
+  const context = useContext(AuthenticationContext);
+
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthenticationProvider')
+    throw new Error('useAuth must be used within an AuthenticationProvider');
   }
-  return context
+
+  return context;
 }
