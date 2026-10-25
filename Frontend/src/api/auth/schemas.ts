@@ -14,13 +14,3 @@ export const AuthResponseSchema = z.object({
   expiresAt: z.iso.datetime({ offset: true }),
   user: UserSchema,
 });
-
-export const SessionSchema = z.object({
-  id: z.string(),
-  createdAt: z.iso.datetime({ offset: true }),
-  lastUsedAt: z.iso.datetime({ offset: true }),
-  expiresAt: z.iso.datetime({ offset: true }),
-  ipAddress: z.string().nullish(),
-  userAgent: z.string().nullish(),
-  isCurrent: z.boolean(),
-});

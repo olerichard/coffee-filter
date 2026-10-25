@@ -160,7 +160,6 @@ namespace Api.Core.Auth
       {
         await _refreshTokenService.RevokeAsync(
           existingToken,
-          RefreshTokenRevocationReasons.Login,
           cancellationToken);
       }
 
@@ -172,12 +171,9 @@ namespace Api.Core.Auth
 
       _refreshTokenCookieService.Append(Response, session.RawToken, session.ExpiresAt);
 
-      var accessToken = _jwtService.GenerateToken(user, session.FamilyId);
+      var accessToken = _jwtService.GenerateToken(user);
 
-      _logger.LogInformation(
-        "User {UserId} logged in. Session {FamilyId}.",
-        user.Id,
-        session.FamilyId);
+      _logger.LogInformation("User {UserId} logged in.", user.Id);
 
       return Ok(new AuthResponse
       {
@@ -212,20 +208,7 @@ namespace Api.Core.Auth
         GetUserAgent(),
         cancellationToken);
 
-      if (rotation.Status == RefreshTokenRotationStatus.ReusedGrace)
-      {
-        // The winning request already set a fresh cookie. Ask the client to
-        // retry once with the newer cookie instead of treating this as a
-        // definitive logout.
-        Response.Headers["X-Refresh-Retry"] = "1";
-        return Unauthorized();
-      }
-
-      if (rotation.Status != RefreshTokenRotationStatus.Success
-        || rotation.RawToken is null
-        || rotation.ExpiresAt is null
-        || rotation.User is null
-        || rotation.FamilyId is null)
+      if (rotation is null)
       {
         _refreshTokenCookieService.Delete(Response);
         return Unauthorized();
@@ -234,11 +217,9 @@ namespace Api.Core.Auth
       _refreshTokenCookieService.Append(
         Response,
         rotation.RawToken,
-        rotation.ExpiresAt.Value);
+        rotation.ExpiresAt);
 
-      var accessToken = _jwtService.GenerateToken(
-        rotation.User,
-        rotation.FamilyId.Value);
+      var accessToken = _jwtService.GenerateToken(rotation.User);
 
       return Ok(new AuthResponse
       {
@@ -262,7 +243,6 @@ namespace Api.Core.Auth
 
       await _refreshTokenService.RevokeAsync(
         rawToken,
-        RefreshTokenRevocationReasons.Logout,
         cancellationToken);
 
       _refreshTokenCookieService.Delete(Response);
@@ -284,12 +264,11 @@ namespace Api.Core.Auth
 
       await _refreshTokenService.RevokeAllForUserAsync(
         userId.Value,
-        RefreshTokenRevocationReasons.LogoutAll,
         cancellationToken);
 
       _refreshTokenCookieService.Delete(Response);
 
-      _logger.LogInformation("All sessions revoked for user {UserId}.", userId.Value);
+      _logger.LogInformation("All refresh tokens revoked for user {UserId}.", userId.Value);
 
       return NoContent();
     }
@@ -353,7 +332,6 @@ namespace Api.Core.Auth
 
       await _refreshTokenService.RevokeAllForUserAsync(
         user.Id,
-        RefreshTokenRevocationReasons.PasswordChanged,
         cancellationToken);
 
       await transaction.CommitAsync(cancellationToken);
@@ -361,67 +339,8 @@ namespace Api.Core.Auth
       _refreshTokenCookieService.Delete(Response);
 
       _logger.LogInformation(
-        "Password changed for user {UserId}. All sessions revoked.",
+        "Password changed for user {UserId}. All refresh tokens revoked.",
         user.Id);
-
-      return NoContent();
-    }
-
-    [HttpGet("sessions")]
-    [Authorize]
-    [ProducesResponseType(typeof(IEnumerable<SessionResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetSessions(CancellationToken cancellationToken)
-    {
-      var userId = _currentUserService.GetCurrentUserId();
-      if (!userId.HasValue)
-      {
-        return Unauthorized();
-      }
-
-      var sessions = await _refreshTokenService.GetSessionsAsync(
-        userId.Value,
-        _currentUserService.GetCurrentSessionId(),
-        cancellationToken);
-
-      var response = sessions.Select(session => new SessionResponse
-      {
-        Id = session.Id,
-        CreatedAt = session.CreatedAt,
-        LastUsedAt = session.LastUsedAt,
-        ExpiresAt = session.ExpiresAt,
-        IpAddress = session.IpAddress,
-        UserAgent = session.UserAgent,
-        IsCurrent = session.IsCurrent
-      });
-
-      return Ok(response);
-    }
-
-    [HttpDelete("sessions/{familyId:guid}")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RevokeSession(
-      Guid familyId,
-      CancellationToken cancellationToken)
-    {
-      var userId = _currentUserService.GetCurrentUserId();
-      if (!userId.HasValue)
-      {
-        return Unauthorized();
-      }
-
-      await _refreshTokenService.RevokeFamilyAsync(
-        familyId,
-        userId.Value,
-        RefreshTokenRevocationReasons.SessionRevoked,
-        cancellationToken);
-
-      if (familyId == _currentUserService.GetCurrentSessionId())
-      {
-        _refreshTokenCookieService.Delete(Response);
-      }
 
       return NoContent();
     }

@@ -54,17 +54,6 @@ namespace Api.Core.Auth
     }
   }
 
-  public class SessionResponse
-  {
-    public required Guid Id { get; set; }
-    public required DateTime CreatedAt { get; set; }
-    public required DateTime LastUsedAt { get; set; }
-    public required DateTime ExpiresAt { get; set; }
-    public string? IpAddress { get; set; }
-    public string? UserAgent { get; set; }
-    public bool IsCurrent { get; set; }
-  }
-
   public class UserDto
   {
     public required int Id { get; set; }

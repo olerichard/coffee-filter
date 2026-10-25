@@ -47,17 +47,14 @@ namespace Api.Core.Auth
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
 
-        // Keep rotated rows for the entire family lifetime so that reuse of an
-        // old token can still revoke the family. Once the family's absolute
-        // expiry passes, no token from it is useful.
         var deleted = await dbContext.RefreshTokens
-          .Where(t => t.FamilyExpiresAt < now)
+          .Where(token => token.ExpiresAt < now)
           .ExecuteDeleteAsync(cancellationToken);
 
         if (deleted > 0)
         {
           _logger.LogInformation(
-            "Deleted {Count} refresh tokens from expired families.",
+            "Deleted {Count} expired refresh tokens.",
             deleted);
         }
       }

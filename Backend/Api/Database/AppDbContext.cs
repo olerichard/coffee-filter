@@ -128,12 +128,6 @@ namespace Api.Database
           .HasMaxLength(64)
           .IsRequired();
 
-        entity.Property(t => t.ReplacedByTokenHash)
-          .HasMaxLength(64);
-
-        entity.Property(t => t.RevokedReason)
-          .HasMaxLength(32);
-
         entity.Property(t => t.CreatedByIp)
           .HasMaxLength(45);
 
@@ -143,8 +137,7 @@ namespace Api.Database
         entity.HasIndex(t => t.TokenHash)
           .IsUnique();
 
-        entity.HasIndex(t => new { t.UserId, t.FamilyId });
-        entity.HasIndex(t => t.FamilyId);
+        entity.HasIndex(t => t.UserId);
         entity.HasIndex(t => t.ExpiresAt);
 
         entity.HasOne(t => t.User)

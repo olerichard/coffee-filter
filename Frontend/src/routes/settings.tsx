@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ChangePasswordRequest, Session } from '@/api/auth/types';
+import { useMutation } from '@tanstack/react-query';
+import type { ChangePasswordRequest } from '@/api/auth/types';
 import { authClient } from '@/api/auth/authClient';
-import { authKeys } from '@/api/auth/keys';
 import { useAuth } from '@/components/context/authentication/AuthenticationContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,17 +35,11 @@ function formatDate(value: string): string {
 
 function SettingsPage() {
   const { user, logout, logoutAll } = useAuth();
-  const queryClient = useQueryClient();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-
-  const sessionsQuery = useQuery({
-    queryKey: authKeys.sessions(),
-    queryFn: () => authClient.getSessions(),
-  });
 
   const changePasswordMutation = useMutation({
     mutationFn: (request: ChangePasswordRequest) =>
@@ -61,24 +54,6 @@ function SettingsPage() {
       setPasswordError(
         'Could not change the password. Check your current password and try again.',
       );
-    },
-  });
-
-  const revokeSessionMutation = useMutation({
-    mutationFn: (sessionId: string) => authClient.revokeSession(sessionId),
-    onSuccess: async (_data, sessionId) => {
-      const revokedSession = sessionsQuery.data?.find(
-        (session) => session.id === sessionId,
-      );
-
-      if (revokedSession?.isCurrent) {
-        await logout();
-        return;
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: authKeys.sessions(),
-      });
     },
   });
 
@@ -118,7 +93,7 @@ function SettingsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Settings</h1>
         <p className="text-muted-foreground text-sm">
-          Manage your account and active sessions.
+          Manage your account and password.
         </p>
       </div>
 
@@ -155,8 +130,8 @@ function SettingsPage() {
         <CardHeader>
           <CardTitle>Change password</CardTitle>
           <CardDescription>
-            Changing your password revokes every refresh session. Existing
-            access tokens expire within 15 minutes.
+            Changing your password revokes every refresh token. Existing access
+            tokens expire within 15 minutes.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,50 +211,9 @@ function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active sessions</CardTitle>
-          <CardDescription>
-            Devices with a valid refresh session. Revoking a session stops it
-            from refreshing; its current access token expires within 15 minutes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {sessionsQuery.isPending ? (
-            <p className="text-muted-foreground text-sm">Loading sessions…</p>
-          ) : null}
-
-          {sessionsQuery.isError ? (
-            <p className="text-destructive text-sm">
-              Could not load active sessions.
-            </p>
-          ) : null}
-
-          {sessionsQuery.data?.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No active sessions found.
-            </p>
-          ) : null}
-
-          {sessionsQuery.data?.map((session) => (
-            <SessionRow
-              key={session.id}
-              session={session}
-              isRevoking={
-                revokeSessionMutation.isPending &&
-                revokeSessionMutation.variables === session.id
-              }
-              onRevoke={() => {
-                revokeSessionMutation.mutate(session.id);
-              }}
-            />
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Sign out everywhere</CardTitle>
           <CardDescription>
-            Revoke every refresh session, including this one. Existing access
+            Revoke every refresh token, including this one. Existing access
             tokens expire within 15 minutes.
           </CardDescription>
         </CardHeader>
@@ -297,51 +231,6 @@ function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function SessionRow({
-  session,
-  isRevoking,
-  onRevoke,
-}: {
-  session: Session;
-  isRevoking: boolean;
-  onRevoke: () => void;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-medium">
-            {session.isCurrent ? 'This device' : 'Other device'}
-          </p>
-          {session.isCurrent ? (
-            <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs">
-              Current
-            </span>
-          ) : null}
-        </div>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Last used {formatDate(session.lastUsedAt)}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          Created {formatDate(session.createdAt)}
-        </p>
-        <p className="text-muted-foreground mt-1 text-xs break-words">
-          {session.ipAddress ?? 'Unknown IP'}
-          {session.userAgent ? ` · ${session.userAgent}` : ''}
-        </p>
-      </div>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={isRevoking}
-        onClick={onRevoke}
-      >
-        {isRevoking ? 'Revoking…' : 'Revoke'}
-      </Button>
     </div>
   );
 }

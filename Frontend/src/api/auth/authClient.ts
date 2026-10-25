@@ -1,12 +1,10 @@
-import { z } from 'zod';
-import { AuthResponseSchema, SessionSchema } from './schemas';
+import { AuthResponseSchema } from './schemas';
 import { refreshSession } from './sessionRefresh';
 import { tokenStore } from './tokenStore';
 import type {
   AuthResponse,
   ChangePasswordRequest,
   LoginRequest,
-  Session,
 } from './types';
 import { apiClient } from '@/api/base/apiClient';
 import { API_BASE_URL } from '@/api/base/apiConfig';
@@ -80,26 +78,6 @@ class AuthClient {
       'POST',
       `${API_BASE_URL}/auth/change-password`,
       request,
-      null,
-    );
-  }
-
-  async getSessions(): Promise<Array<Session>> {
-    const response = await apiClient.fetch<Array<Session>>(
-      'GET',
-      `${API_BASE_URL}/auth/sessions`,
-      null,
-      z.array(SessionSchema),
-    );
-
-    return response;
-  }
-
-  async revokeSession(sessionId: string): Promise<void> {
-    await apiClient.fetch<void>(
-      'DELETE',
-      `${API_BASE_URL}/auth/sessions/${sessionId}`,
-      null,
       null,
     );
   }

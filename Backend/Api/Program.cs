@@ -44,12 +44,6 @@ builder.Services.AddOptions<JwtSettings>()
         settings => settings.RefreshTokenDays > 0,
         "JwtSettings:RefreshTokenDays must be positive.")
     .Validate(
-        settings => settings.RefreshTokenAbsoluteDays >= settings.RefreshTokenDays,
-        "JwtSettings:RefreshTokenAbsoluteDays must be greater than or equal to RefreshTokenDays.")
-    .Validate(
-        settings => settings.RefreshReuseGraceSeconds >= 0,
-        "JwtSettings:RefreshReuseGraceSeconds cannot be negative.")
-    .Validate(
         settings => !string.IsNullOrWhiteSpace(settings.RefreshCookieName),
         "JwtSettings:RefreshCookieName is required.")
     .ValidateOnStart();
@@ -106,8 +100,7 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(corsSettings.AllowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowCredentials()
-                  .WithExposedHeaders("X-Refresh-Retry");
+                  .AllowCredentials();
         });
 });
 

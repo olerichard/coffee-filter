@@ -12,7 +12,7 @@ namespace Api.Core.Auth
 
   public interface IJwtService
   {
-    AccessTokenResult GenerateToken(UserEntity user, Guid sessionId);
+    AccessTokenResult GenerateToken(UserEntity user);
   }
 
   public class JwtService : IJwtService
@@ -28,7 +28,7 @@ namespace Api.Core.Auth
       _timeProvider = timeProvider;
     }
 
-    public AccessTokenResult GenerateToken(UserEntity user, Guid sessionId)
+    public AccessTokenResult GenerateToken(UserEntity user)
     {
       var now = _timeProvider.GetUtcNow();
       var expiresAt = now.AddMinutes(_settings.AccessTokenMinutes);
@@ -45,7 +45,7 @@ namespace Api.Core.Auth
         new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString(CultureInfo.InvariantCulture)),
         new Claim(JwtRegisteredClaimNames.Name, user.Username),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
-        new Claim(AuthClaimTypes.SessionId, sessionId.ToString("N")),
+        new Claim(AuthClaimTypes.SessionId, Guid.NewGuid().ToString("N")),
         new Claim(
           JwtRegisteredClaimNames.Iat,
           now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
