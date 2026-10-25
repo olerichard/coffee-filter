@@ -61,6 +61,9 @@ builder.Services.AddOptions<LockoutSettings>()
 builder.Services.Configure<CorsSettings>(
     builder.Configuration.GetSection(CorsSettings.SectionName));
 
+builder.Services.Configure<SignupSettings>(
+    builder.Configuration.GetSection(SignupSettings.SectionName));
+
 var corsSettings = builder.Configuration
     .GetSection(CorsSettings.SectionName)
     .Get<CorsSettings>() ?? new CorsSettings();
@@ -219,6 +222,16 @@ builder.Services.AddRateLimiter(options =>
             }));
 
     options.AddPolicy(RateLimitPolicies.PasswordChange, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.Signup, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions

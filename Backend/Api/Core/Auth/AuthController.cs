@@ -11,6 +11,8 @@ namespace Api.Core.Auth
   using Microsoft.AspNetCore.RateLimiting;
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Options;
+  using System.Security.Cryptography;
+  using System.Text;
 
   [ApiController]
   [Route("api/auth")]
@@ -18,7 +20,7 @@ namespace Api.Core.Auth
   [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
   public class AuthController : Controller
   {
-    private const string InvalidCredentialsMessage = "Invalid username or password";
+    private const string InvalidCredentialsMessage = "Invalid email or password";
 
     private readonly AppDbContext _dbContext;
     private readonly IPasswordHasher<UserEntity> _passwordHasher;
@@ -29,6 +31,7 @@ namespace Api.Core.Auth
     private readonly DummyPasswordHash _dummyPasswordHash;
     private readonly LockoutSettings _lockoutSettings;
     private readonly CorsSettings _corsSettings;
+    private readonly SignupSettings _signupSettings;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<AuthController> _logger;
 
@@ -42,6 +45,7 @@ namespace Api.Core.Auth
       DummyPasswordHash dummyPasswordHash,
       IOptions<LockoutSettings> lockoutSettings,
       IOptions<CorsSettings> corsSettings,
+      IOptions<SignupSettings> signupSettings,
       TimeProvider timeProvider,
       ILogger<AuthController> logger)
     {
@@ -54,6 +58,7 @@ namespace Api.Core.Auth
       _dummyPasswordHash = dummyPasswordHash;
       _lockoutSettings = lockoutSettings.Value;
       _corsSettings = corsSettings.Value;
+      _signupSettings = signupSettings.Value;
       _timeProvider = timeProvider;
       _logger = logger;
     }
@@ -80,16 +85,18 @@ namespace Api.Core.Auth
         return ValidationProblemFrom(validationResult);
       }
 
+      var email = NormalizeEmail(request.Email);
+
       var user = await _dbContext.Users
-        .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
+        .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
 
       if (user is null)
       {
-        // Keep the failure path expensive and uniform for unknown usernames.
+        // Keep the failure path expensive and uniform for unknown emails.
         _passwordHasher.VerifyHashedPassword(null!, _dummyPasswordHash.Value, request.Password);
 
         _logger.LogWarning(
-          "Login failed for unknown username from {IpAddress}.",
+          "Login failed for unknown email from {IpAddress}.",
           GetIpAddress());
 
         return Unauthorized(new { message = InvalidCredentialsMessage });
@@ -345,6 +352,123 @@ namespace Api.Core.Auth
       return NoContent();
     }
 
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Signup)]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Register(
+      [FromBody] RegisterRequest request,
+      [FromServices] RegisterRequestValidator validator,
+      CancellationToken cancellationToken)
+    {
+      if (!IsAllowedOrigin())
+      {
+        return StatusCode(StatusCodes.Status403Forbidden);
+      }
+
+      var validationResult = await validator.ValidateAsync(request, cancellationToken);
+      if (!validationResult.IsValid)
+      {
+        return ValidationProblemFrom(validationResult);
+      }
+
+      if (!_signupSettings.IsEnabled)
+      {
+        return StatusCode(
+          StatusCodes.Status403Forbidden,
+          new { message = "Sign-up is disabled." });
+      }
+
+      if (!InviteCodeMatches(request.InviteCode, _signupSettings.InviteCode))
+      {
+        _logger.LogWarning(
+          "Registration rejected: invalid invite code from {IpAddress}.",
+          GetIpAddress());
+
+        return BadRequest(new { message = "Invalid invite code." });
+      }
+
+      var email = NormalizeEmail(request.Email);
+
+      var emailExists = await _dbContext.Users
+        .AnyAsync(u => u.Email.ToLower() == email, cancellationToken);
+
+      if (emailExists)
+      {
+        return Conflict(new { message = "An account with that email already exists." });
+      }
+
+      var now = _timeProvider.GetUtcNow().UtcDateTime;
+      var displayName = request.DisplayName.Trim();
+
+      var user = new UserEntity
+      {
+        Username = email,
+        Email = email,
+        DisplayName = displayName,
+        IsActive = true,
+        LastLoginAt = now,
+        CreatedBy = email,
+        LastModifiedBy = email,
+        PasswordHash = string.Empty
+      };
+
+      user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
+      await using var transaction = await _dbContext.Database
+        .BeginTransactionAsync(cancellationToken);
+
+      _dbContext.Users.Add(user);
+
+      try
+      {
+        await _dbContext.SaveChangesAsync(cancellationToken);
+      }
+      catch (DbUpdateException)
+      {
+        // The unique indexes on Username/Email close the race between the
+        // existence check above and this insert.
+        await transaction.RollbackAsync(cancellationToken);
+
+        return Conflict(new { message = "An account with that email already exists." });
+      }
+
+      var session = await _refreshTokenService.CreateAsync(
+        user,
+        GetIpAddress(),
+        GetUserAgent(),
+        cancellationToken);
+
+      await transaction.CommitAsync(cancellationToken);
+
+      _refreshTokenCookieService.Append(Response, session.RawToken, session.ExpiresAt);
+
+      var accessToken = _jwtService.GenerateToken(user);
+
+      _logger.LogInformation("User {UserId} registered.", user.Id);
+
+      return Ok(new AuthResponse
+      {
+        AccessToken = accessToken.Token,
+        ExpiresAt = accessToken.ExpiresAt,
+        User = user.ToUserDto()
+      });
+    }
+
+    [HttpGet("signup-status")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SignupStatusResponse), StatusCodes.Status200OK)]
+    public IActionResult GetSignupStatus()
+    {
+      return Ok(new SignupStatusResponse
+      {
+        Enabled = _signupSettings.IsEnabled
+      });
+    }
+
     private IActionResult ValidationProblemFrom(ValidationResult validationResult)
     {
       var modelState = new ModelStateDictionary();
@@ -355,6 +479,24 @@ namespace Api.Core.Auth
       }
 
       return ValidationProblem(modelState);
+    }
+
+    private static string NormalizeEmail(string email) =>
+      email.Trim().ToLowerInvariant();
+
+    private static bool InviteCodeMatches(string provided, string expected)
+    {
+      if (string.IsNullOrWhiteSpace(provided) || string.IsNullOrWhiteSpace(expected))
+      {
+        return false;
+      }
+
+      var providedHash = SHA256.HashData(
+        Encoding.UTF8.GetBytes(provided.Trim()));
+      var expectedHash = SHA256.HashData(
+        Encoding.UTF8.GetBytes(expected.Trim()));
+
+      return CryptographicOperations.FixedTimeEquals(providedHash, expectedHash);
     }
 
     private string? GetIpAddress()

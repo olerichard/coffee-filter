@@ -6,6 +6,7 @@ import type {
   AuthContextType,
   AuthState,
   LoginRequest,
+  RegisterRequest,
 } from './auth.types';
 import { authClient } from '@/api/auth/authClient';
 import { broadcastLogout, subscribeToLogout } from '@/api/auth/authChannel';
@@ -136,6 +137,27 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const register = async (request: RegisterRequest) => {
+    queryClient.clear();
+    dispatch({ type: 'AUTH_START' });
+
+    try {
+      const response = await authClient.register(request);
+
+      // A registration sets the shared refresh cookie. Sign out other tabs so
+      // they cannot keep acting as a previously signed-in user.
+      broadcastLogout();
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user: response.user },
+      });
+    } catch (error) {
+      dispatch({ type: 'AUTH_FAILURE' });
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await authClient.logout();
@@ -159,6 +181,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
   const contextValue: AuthContextType = {
     state,
     login,
+    register,
     logout,
     logoutAll,
     isLoading: state.isLoading,

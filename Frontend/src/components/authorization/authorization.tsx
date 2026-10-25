@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { AuthScreen } from './auth-screen';
+import type { ReactNode } from 'react';
 import { useAuth } from '@/components/context/authentication/AuthenticationContext';
-import { Login } from './login';
 import { Card, CardContent } from '@/components/ui/card';
 
 export const Authorization = ({ children }: { children: ReactNode }) => {
@@ -16,7 +16,7 @@ export const Authorization = ({ children }: { children: ReactNode }) => {
   if (!isAuthenticated)
     return (
       <AuthPage>
-        <Login />
+        <AuthScreen />
       </AuthPage>
     );
 

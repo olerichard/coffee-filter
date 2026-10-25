@@ -1,6 +1,11 @@
-import type { LoginRequest, User } from '@/api/auth/types';
+import type { LoginRequest, RegisterRequest, User } from '@/api/auth/types';
 
-export type { AuthResponse, LoginRequest, User } from '@/api/auth/types';
+export type {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  User,
+} from '@/api/auth/types';
 
 export interface AuthState {
   user: User | null;
@@ -11,6 +16,7 @@ export interface AuthState {
 export interface AuthContextType {
   state: AuthState;
   login: (credentials: LoginRequest) => Promise<void>;
+  register: (request: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   isLoading: boolean;

@@ -4,7 +4,7 @@ namespace Api.Core.Auth
 
   public class LoginRequest
   {
-    public required string Username { get; set; }
+    public required string Email { get; set; }
     public required string Password { get; set; }
   }
 
@@ -12,16 +12,53 @@ namespace Api.Core.Auth
   {
     public LoginRequestValidator()
     {
-      RuleFor(x => x.Username)
+      RuleFor(x => x.Email)
         .NotEmpty()
-        .MinimumLength(3)
-        .MaximumLength(50);
+        .EmailAddress()
+        .MaximumLength(254);
 
       RuleFor(x => x.Password)
         .NotEmpty()
         .MinimumLength(6)
         .MaximumLength(128);
     }
+  }
+
+  public class RegisterRequest
+  {
+    public required string Email { get; set; }
+    public required string Password { get; set; }
+    public required string DisplayName { get; set; }
+    public required string InviteCode { get; set; }
+  }
+
+  public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
+  {
+    public RegisterRequestValidator()
+    {
+      RuleFor(x => x.Email)
+        .NotEmpty()
+        .EmailAddress()
+        .MaximumLength(254);
+
+      RuleFor(x => x.Password)
+        .NotEmpty()
+        .MinimumLength(12)
+        .MaximumLength(128);
+
+      RuleFor(x => x.DisplayName)
+        .NotEmpty()
+        .MaximumLength(100);
+
+      RuleFor(x => x.InviteCode)
+        .NotEmpty()
+        .MaximumLength(512);
+    }
+  }
+
+  public class SignupStatusResponse
+  {
+    public bool Enabled { get; set; }
   }
 
   public class AuthResponse

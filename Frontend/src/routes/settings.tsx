@@ -104,10 +104,6 @@ function SettingsPage() {
         </CardHeader>
         <CardContent className="grid gap-3 text-sm">
           <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Username</span>
-            <span className="font-medium">{user.username}</span>
-          </div>
-          <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Email</span>
             <span className="font-medium">{user.email}</span>
           </div>

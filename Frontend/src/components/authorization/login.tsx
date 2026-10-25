@@ -6,9 +6,14 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
-export const Login = () => {
+interface LoginProps {
+  signupEnabled?: boolean;
+  onSwitchToRegister?: () => void;
+}
+
+export const Login = ({ signupEnabled, onSwitchToRegister }: LoginProps) => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: '',
   });
 
@@ -24,20 +29,24 @@ export const Login = () => {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            login.mutate(credentials);
+            login.mutate({
+              email: credentials.email.trim(),
+              password: credentials.password,
+            });
           }}
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="username">Username</FieldLabel>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
-                id="username"
-                autoComplete="username"
-                value={credentials.username}
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={credentials.email}
                 onChange={(event) =>
                   setCredentials((current) => ({
                     ...current,
-                    username: event.target.value,
+                    email: event.target.value,
                   }))
                 }
               />
@@ -72,13 +81,24 @@ export const Login = () => {
             className="mt-6 w-full"
             disabled={
               login.isPending ||
-              credentials.username.length === 0 ||
+              credentials.email.length === 0 ||
               credentials.password.length === 0
             }
           >
             {login.isPending ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>
+
+        {signupEnabled && onSwitchToRegister ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-2 w-full"
+            onClick={onSwitchToRegister}
+          >
+            Create account
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

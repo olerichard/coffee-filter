@@ -14,3 +14,7 @@ export const AuthResponseSchema = z.object({
   expiresAt: z.iso.datetime({ offset: true }),
   user: UserSchema,
 });
+
+export const SignupStatusSchema = z.object({
+  enabled: z.boolean(),
+});
