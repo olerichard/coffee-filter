@@ -10,7 +10,6 @@ import appCss from '../styles.css?url';
 
 import type { QueryClient } from '@tanstack/react-query';
 import { Authorization } from '@/components/authorization/authorization';
-import { ThemeProvider } from '@/components/context/themeContext/ThemeProvider';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 
 interface RouterContext {
@@ -57,11 +56,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ThemeProvider>
-          <BaseLayout>
-            <Authorization>{children}</Authorization>
-          </BaseLayout>
-        </ThemeProvider>
+        <BaseLayout>
+          <Authorization>{children}</Authorization>
+        </BaseLayout>
         {Devtools ? (
           <Suspense fallback={null}>
             <Devtools />

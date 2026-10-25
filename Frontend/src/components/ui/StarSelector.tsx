@@ -85,7 +85,7 @@ export function StarSelector({
         <CircleOffIcon
           className={cn(
             'size-8 md:size-10 transition-colors',
-            'text-muted hover:text-muted-foreground',
+            'text-muted-foreground/40 hover:text-muted-foreground',
           )}
         />
       </button>
