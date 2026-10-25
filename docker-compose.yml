@@ -27,6 +27,7 @@ services:
       ASPNETCORE_URLS: http://+:5186
       ConnectionStrings__DefaultConnection: Data Source=/data/coffee-filter.db
       Cors__AllowedOrigins__0: https://coffee-filter.olerichard.no
+      Cors__AllowedOrigins__1: https://cf.olerichard.no
       JwtSettings__Issuer: coffee-filter.olerichard.no
       JwtSettings__Audience: coffee-filter-users
       Seed__DemoData: "false"

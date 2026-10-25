@@ -1,4 +1,4 @@
-coffee-filter.olerichard.no {
+coffee-filter.olerichard.no, cf.olerichard.no {
   encode zstd gzip
 
   reverse_proxy /api/* api:5186
