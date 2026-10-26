@@ -9,7 +9,7 @@ type ConfirmAction = 'open' | 'empty';
 
 interface CoffeeBagCardProps {
   coffeeBag: CoffeeBagWithUsage;
-  onEdit: (coffeeBag: CoffeeBagWithUsage) => void;
+  onEdit: (coffeeBagId: number) => void;
 }
 
 export const CoffeeBagCard = ({ coffeeBag, onEdit }: CoffeeBagCardProps) => {
@@ -88,7 +88,7 @@ export const CoffeeBagCard = ({ coffeeBag, onEdit }: CoffeeBagCardProps) => {
         variant="ghost"
         size="icon-sm"
         className="absolute top-2 right-2 z-10 rounded-full"
-        onClick={() => onEdit(coffeeBag)}
+        onClick={() => onEdit(coffeeBag.id)}
         aria-label="Edit coffee bag"
         title="Edit coffee bag"
       >

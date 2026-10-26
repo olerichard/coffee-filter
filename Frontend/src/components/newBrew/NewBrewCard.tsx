@@ -1,32 +1,27 @@
 import { useEffect, useState } from 'react';
 import { CreateBrew } from './CreateBrew';
 import { EditBrew } from './EditBrew';
-import type { Brew } from '@/api/brews/brewRequestSchemas';
-import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
+import type { DashboardPanel } from '@/lib/dashboardSearch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CreateCoffeeBag } from '@/components/coffeeBagForm/CreateCoffeeBag';
 import { EditCoffeeBag } from '@/components/coffeeBagForm/EditCoffeeBag';
 
-export type NewBrewOpenState = 'none' | 'bag' | 'brew';
-
 const SCROLL_THRESHOLD = 8;
 
 interface NewBrewCardProps {
-  open: NewBrewOpenState;
-  onOpenChange: (state: NewBrewOpenState) => void;
-  editingBrew?: Brew | null;
-  editingCoffeeBag?: CoffeeBagWithUsage | null;
-  onEditEnd: () => void;
+  panel: DashboardPanel;
+  onOpenNewBrew: () => void;
+  onOpenNewBag: () => void;
+  onClose: () => void;
 }
 
 export const NewBrewCard = ({
-  open,
-  onOpenChange,
-  editingBrew = null,
-  editingCoffeeBag = null,
-  onEditEnd,
+  panel,
+  onOpenNewBrew,
+  onOpenNewBag,
+  onClose,
 }: NewBrewCardProps) => {
   const [scrolled, setScrolled] = useState(false);
 
@@ -42,9 +37,36 @@ export const NewBrewCard = ({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const panelContent = (() => {
+    switch (panel.kind) {
+      case 'none':
+        return null;
+      case 'new-brew':
+        return <CreateBrew onCancel={onClose} />;
+      case 'edit-brew':
+        return (
+          <EditBrew
+            key={panel.brewId}
+            brewId={panel.brewId}
+            onCancel={onClose}
+          />
+        );
+      case 'new-bag':
+        return <CreateCoffeeBag onCancel={onClose} />;
+      case 'edit-bag':
+        return (
+          <EditCoffeeBag
+            key={panel.coffeeBagId}
+            coffeeBagId={panel.coffeeBagId}
+            onCancel={onClose}
+          />
+        );
+    }
+  })();
+
   return (
     <>
-      {open === 'none' && (
+      {panel.kind === 'none' && (
         <div className="sticky top-0 z-40">
           <Card
             className={cn(
@@ -54,13 +76,10 @@ export const NewBrewCard = ({
           >
             <CardContent className={cn(compact && 'px-1')}>
               <div className="grid grid-cols-3 gap-4">
-                <Button
-                  onClick={() => onOpenChange('brew')}
-                  className="col-span-2"
-                >
+                <Button onClick={onOpenNewBrew} className="col-span-2">
                   New Brew
                 </Button>
-                <Button variant="outline" onClick={() => onOpenChange('bag')}>
+                <Button variant="outline" onClick={onOpenNewBag}>
                   Add Bag
                 </Button>
               </div>
@@ -68,33 +87,11 @@ export const NewBrewCard = ({
           </Card>
         </div>
       )}
-      <div
-        hidden={open === 'none'}
-        className="bg-card border rounded-2xl shadow-md px-6 py-6"
-      >
-        <div hidden={open !== 'brew'}>
-          {editingBrew !== null ? (
-            <EditBrew
-              key={editingBrew.id}
-              brew={editingBrew}
-              onCancel={onEditEnd}
-            />
-          ) : (
-            <CreateBrew onCancel={() => onOpenChange('none')} />
-          )}
+      {panelContent !== null && (
+        <div className="bg-card border rounded-2xl shadow-md px-6 py-6">
+          {panelContent}
         </div>
-        <div hidden={open !== 'bag'}>
-          {editingCoffeeBag !== null ? (
-            <EditCoffeeBag
-              key={editingCoffeeBag.id}
-              coffeeBag={editingCoffeeBag}
-              onCancel={onEditEnd}
-            />
-          ) : (
-            <CreateCoffeeBag onCancel={() => onOpenChange('none')} />
-          )}
-        </div>
-      </div>
+      )}
     </>
   );
 };

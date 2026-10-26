@@ -23,6 +23,17 @@ class CoffeeBagClient {
     return res;
   }
 
+  async getCoffeeBagById(id: number) {
+    const res = await apiClient.fetch<CoffeeBagWithUsage>(
+      'GET',
+      this.getUrl(id.toString()),
+      null,
+      CoffeeBagWithUsageResponseSchema,
+    );
+
+    return res;
+  }
+
   async createCoffeeBag(data: CoffeeBagCreateRequest) {
     const res = await apiClient.fetch<CoffeeBagWithUsage>(
       'POST',

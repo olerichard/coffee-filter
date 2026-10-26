@@ -7,7 +7,7 @@ import { apiClients } from '@/api/apiClients';
 import { StarDisplay } from '@/components/ui/StarDisplay';
 
 interface PreviousBrewsProps {
-  onEdit: (brew: Brew) => void;
+  onEdit: (brewId: number) => void;
 }
 
 export const PreviousBrews = ({ onEdit }: PreviousBrewsProps) => {
@@ -61,7 +61,7 @@ const BrewCard = ({
   onEdit,
 }: {
   brew: Brew;
-  onEdit: (brew: Brew) => void;
+  onEdit: (brewId: number) => void;
 }) => {
   const formattedDate = new Date(brew.brewedOn).toLocaleDateString('en-US', {
     month: 'short',
@@ -76,7 +76,7 @@ const BrewCard = ({
         variant="ghost"
         size="icon-sm"
         className="absolute top-2 right-2 z-10 rounded-full"
-        onClick={() => onEdit(brew)}
+        onClick={() => onEdit(brew.id)}
         aria-label="Edit brew"
         title="Edit brew"
       >

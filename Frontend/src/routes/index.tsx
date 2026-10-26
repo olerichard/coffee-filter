@@ -1,8 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
-import type { Brew } from '@/api/brews/brewRequestSchemas';
-import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
-import type { NewBrewOpenState } from '@/components/newBrew/NewBrewCard';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import type { DashboardSearch, DashboardView } from '@/lib/dashboardSearch';
+import {
+  closeDashboardPanel,
+  getDashboardPanel,
+  getDashboardShowEmpty,
+  getDashboardView,
+  openEditBag,
+  openEditBrew,
+  openNewBag,
+  openNewBrew,
+  setDashboardShowEmpty,
+  setDashboardView,
+  validateDashboardSearch,
+} from '@/lib/dashboardSearch';
 import { runViewTransition } from '@/lib/viewTransition';
 import {
   Select,
@@ -18,60 +28,64 @@ import { PreviousBrews } from '@/components/brews/PreviousBrews';
 import { CoffeeBagList } from '@/components/coffeeBagList/CoffeeBagList';
 
 export const Route = createFileRoute('/')({
+  validateSearch: validateDashboardSearch,
   component: DashBoard,
 });
 
 function DashBoard() {
-  const [editingBrew, setEditingBrew] = useState<Brew | null>(null);
-  const [editingCoffeeBag, setEditingCoffeeBag] =
-    useState<CoffeeBagWithUsage | null>(null);
-  const [open, setOpen] = useState<NewBrewOpenState>('none');
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
 
-  const transitionOpenTo = (
-    state: NewBrewOpenState,
-    beforeUpdate?: () => void,
+  const panel = getDashboardPanel(search);
+  const view = getDashboardView(search);
+  const showEmpty = getDashboardShowEmpty(search);
+
+  const updateSearch = (
+    updater: (current: DashboardSearch) => DashboardSearch,
+    scrollToTop = false,
   ) => {
-    if (state !== 'none' && window.scrollY > 0) {
+    if (scrollToTop && window.scrollY > 0) {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     runViewTransition(() => {
-      beforeUpdate?.();
-      setOpen(state);
+      void navigate({ search: updater, replace: true });
     });
   };
 
-  const handleEditBrew = (brew: Brew) => {
-    transitionOpenTo('brew', () => {
-      setEditingBrew(brew);
-      setEditingCoffeeBag(null);
-    });
+  const handleOpenNewBrew = () => updateSearch(openNewBrew, true);
+  const handleOpenNewBag = () => updateSearch(openNewBag, true);
+  const handleClosePanel = () => updateSearch(closeDashboardPanel);
+
+  const handleEditBrew = (brewId: number) => {
+    updateSearch((current) => openEditBrew(current, brewId), true);
   };
 
-  const handleEditCoffeeBag = (coffeeBag: CoffeeBagWithUsage) => {
-    transitionOpenTo('bag', () => {
-      setEditingCoffeeBag(coffeeBag);
-      setEditingBrew(null);
-    });
+  const handleEditCoffeeBag = (coffeeBagId: number) => {
+    updateSearch((current) => openEditBag(current, coffeeBagId), true);
   };
 
-  const handleEditEnd = () => {
-    transitionOpenTo('none', () => {
-      setEditingBrew(null);
-      setEditingCoffeeBag(null);
-    });
+  const handleViewChange = (nextView: DashboardView) => {
+    updateSearch((current) => setDashboardView(current, nextView));
+  };
+
+  const handleShowEmptyChange = (nextShowEmpty: boolean) => {
+    updateSearch((current) => setDashboardShowEmpty(current, nextShowEmpty));
   };
 
   return (
     <div>
       <NewBrewCard
-        open={open}
-        onOpenChange={transitionOpenTo}
-        editingBrew={editingBrew}
-        editingCoffeeBag={editingCoffeeBag}
-        onEditEnd={handleEditEnd}
+        panel={panel}
+        onOpenNewBrew={handleOpenNewBrew}
+        onOpenNewBag={handleOpenNewBag}
+        onClose={handleClosePanel}
       />
       <ListSection
+        view={view}
+        showEmpty={showEmpty}
+        onViewChange={handleViewChange}
+        onShowEmptyChange={handleShowEmptyChange}
         onEditBrew={handleEditBrew}
         onEditCoffeeBag={handleEditCoffeeBag}
       />
@@ -80,37 +94,47 @@ function DashBoard() {
 }
 
 interface ListSectionProps {
-  onEditBrew: (brew: Brew) => void;
-  onEditCoffeeBag: (coffeeBag: CoffeeBagWithUsage) => void;
+  view: DashboardView;
+  showEmpty: boolean;
+  onViewChange: (view: DashboardView) => void;
+  onShowEmptyChange: (showEmpty: boolean) => void;
+  onEditBrew: (brewId: number) => void;
+  onEditCoffeeBag: (coffeeBagId: number) => void;
 }
 
-function ListSection({ onEditBrew, onEditCoffeeBag }: ListSectionProps) {
-  const [view, setView] = useState<'brews' | 'coffeeBags'>('brews');
-  const [showEmpty, setShowEmpty] = useState(false);
-
+function ListSection({
+  view,
+  showEmpty,
+  onViewChange,
+  onShowEmptyChange,
+  onEditBrew,
+  onEditCoffeeBag,
+}: ListSectionProps) {
   return (
     <div className="flex flex-col gap-4 py-1.5 px-4 sm:px-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Select
             value={view}
-            onValueChange={(value) => setView(value as 'brews' | 'coffeeBags')}
+            onValueChange={(value) => onViewChange(value as DashboardView)}
           >
             <SelectTrigger className="w-45">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="brews">Previous Brews</SelectItem>
-              <SelectItem value="coffeeBags">Coffee Bags</SelectItem>
+              <SelectItem value="bags">Coffee Bags</SelectItem>
             </SelectContent>
           </Select>
 
-          {view === 'coffeeBags' && (
+          {view === 'bags' && (
             <div className="flex items-center gap-2">
               <Checkbox
                 id="showEmpty"
                 checked={showEmpty}
-                onCheckedChange={(checked) => setShowEmpty(checked as boolean)}
+                onCheckedChange={(checked) =>
+                  onShowEmptyChange(checked === true)
+                }
               />
               <Label htmlFor="showEmpty" className="text-sm cursor-pointer">
                 Show empty

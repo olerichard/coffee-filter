@@ -18,6 +18,7 @@ export function useDeleteBrew({ onSuccess }: UseDeleteBrewOptions) {
         (old: Array<Brew> | undefined) =>
           old?.filter((brew) => brew.id !== id) ?? [],
       );
+      queryClient.removeQueries({ queryKey: ['brews', id] });
       await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess();
     },

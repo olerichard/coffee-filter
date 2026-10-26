@@ -21,6 +21,7 @@ export function useUpdateBrew({ onSuccess }: UseUpdateBrewOptions) {
             brew.id === updatedBrew.id ? updatedBrew : brew,
           ) ?? [updatedBrew],
       );
+      await queryClient.setQueryData(['brews', updatedBrew.id], updatedBrew);
       await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess();
     },

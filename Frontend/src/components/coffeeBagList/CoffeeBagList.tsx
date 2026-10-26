@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { CoffeeBagCard } from './CoffeeBagCard';
-import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { apiClients } from '@/api/apiClients';
 import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 
 interface CoffeeBagListProps {
   showEmpty?: boolean;
-  onEdit: (coffeeBag: CoffeeBagWithUsage) => void;
+  onEdit: (coffeeBagId: number) => void;
 }
 
 export const CoffeeBagList = ({
