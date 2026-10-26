@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { CreateBrew } from './CreateBrew';
 import { EditBrew } from './EditBrew';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
+import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CreateCoffeeBagForm } from '@/components/coffeeBagForm/CreateCoffeeBagForm';
+import { CreateCoffeeBag } from '@/components/coffeeBagForm/CreateCoffeeBag';
+import { EditCoffeeBag } from '@/components/coffeeBagForm/EditCoffeeBag';
 
 export type NewBrewOpenState = 'none' | 'bag' | 'brew';
 
@@ -15,6 +17,7 @@ interface NewBrewCardProps {
   open: NewBrewOpenState;
   onOpenChange: (state: NewBrewOpenState) => void;
   editingBrew?: Brew | null;
+  editingCoffeeBag?: CoffeeBagWithUsage | null;
   onEditEnd: () => void;
 }
 
@@ -22,6 +25,7 @@ export const NewBrewCard = ({
   open,
   onOpenChange,
   editingBrew = null,
+  editingCoffeeBag = null,
   onEditEnd,
 }: NewBrewCardProps) => {
   const [scrolled, setScrolled] = useState(false);
@@ -80,7 +84,15 @@ export const NewBrewCard = ({
           )}
         </div>
         <div hidden={open !== 'bag'}>
-          <CreateCoffeeBagForm onCancel={() => onOpenChange('none')} />
+          {editingCoffeeBag !== null ? (
+            <EditCoffeeBag
+              key={editingCoffeeBag.id}
+              coffeeBag={editingCoffeeBag}
+              onCancel={onEditEnd}
+            />
+          ) : (
+            <CreateCoffeeBag onCancel={() => onOpenChange('none')} />
+          )}
         </div>
       </div>
     </>

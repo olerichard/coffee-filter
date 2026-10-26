@@ -1,13 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { CoffeeBagCard } from './CoffeeBagCard';
+import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { apiClients } from '@/api/apiClients';
 import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 
 interface CoffeeBagListProps {
   showEmpty?: boolean;
+  onEdit: (coffeeBag: CoffeeBagWithUsage) => void;
 }
 
-export const CoffeeBagList = ({ showEmpty = false }: CoffeeBagListProps) => {
+export const CoffeeBagList = ({
+  showEmpty = false,
+  onEdit,
+}: CoffeeBagListProps) => {
   const query = useQuery({
     queryKey: coffeeBagKeys.list(showEmpty),
     queryFn: () => apiClients.coffeeBag.getCoffeeBags(showEmpty),
@@ -44,7 +49,11 @@ export const CoffeeBagList = ({ showEmpty = false }: CoffeeBagListProps) => {
   return (
     <div className="flex flex-col gap-3">
       {coffeeBags.map((coffeeBag) => (
-        <CoffeeBagCard key={coffeeBag.id} coffeeBag={coffeeBag} />
+        <CoffeeBagCard
+          key={coffeeBag.id}
+          coffeeBag={coffeeBag}
+          onEdit={onEdit}
+        />
       ))}
     </div>
   );

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Brew, BrewUpdateRequest } from '@/api/brews/brewRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 
 interface UseUpdateBrewOptions {
@@ -20,6 +21,7 @@ export function useUpdateBrew({ onSuccess }: UseUpdateBrewOptions) {
             brew.id === updatedBrew.id ? updatedBrew : brew,
           ) ?? [updatedBrew],
       );
+      await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess();
     },
   });

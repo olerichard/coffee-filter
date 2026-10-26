@@ -1,64 +1,26 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { CoffeeBagCreateRequestSchema } from '@/api/coffeeBags/coffeeRequestSchemas';
+import type { CoffeeBagCreateRequest } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
-
-export const ROAST_STYLES = [
-  'Espresso',
-  'Filter',
-  'Omni',
-] as const;
-
-export const CoffeeBagFormSchema = CoffeeBagCreateRequestSchema;
-
-export type CoffeeBagFormValues = z.infer<typeof CoffeeBagFormSchema>;
 
 interface UseCreateCoffeeBagOptions {
   onSuccess: () => void;
 }
 
-const defaultValues: CoffeeBagFormValues = {
-  roaster: '',
-  name: '',
-  origin: '',
-  roastStyle: '',
-  flavourNotes: '',
-  opened: '',
-};
-
 export function useCreateCoffeeBag({ onSuccess }: UseCreateCoffeeBagOptions) {
   const queryClient = useQueryClient();
 
-  const form = useForm({
-    defaultValues: defaultValues,
-    validators: {
-      onChange: CoffeeBagFormSchema,
-      onSubmit: CoffeeBagFormSchema,
-    },
-    onSubmit: ({ value }) => {
-      createCoffeeBagMutation.mutate(value);
-    },
-  });
-
-  const createCoffeeBagMutation = useMutation({
-    mutationFn: (data: CoffeeBagFormValues) => {
-      const formattedData = {
-        ...data,
-        opened: data.opened ? new Date(data.opened + 'T00:00:00.000Z').toISOString() : undefined,
-      };
-      return apiClients.coffeeBag.createCoffeeBag(formattedData);
-    },
+  const mutation = useMutation({
+    mutationFn: (data: CoffeeBagCreateRequest) =>
+      apiClients.coffeeBag.createCoffeeBag(data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
-      form.reset();
       onSuccess();
     },
   });
 
   return {
-    form,
-    isLoading: createCoffeeBagMutation.isPending,
+    createCoffeeBag: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
 }

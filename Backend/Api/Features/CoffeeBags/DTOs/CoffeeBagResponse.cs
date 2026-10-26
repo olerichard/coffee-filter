@@ -11,4 +11,5 @@ public record CoffeeBagResponse
   public string? FlavourNotes { get; set; }
   public DateTime? Opened { get; set; }
   public DateTime? Emptied { get; set; }
+  public int BrewCount { get; set; }
 }

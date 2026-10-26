@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Brew, BrewCreateRequest } from '@/api/brews/brewRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 
 interface UseCreateBrewOptions {
@@ -16,6 +17,7 @@ export function useCreateBrew({ onSuccess }: UseCreateBrewOptions) {
         ['brews'],
         (old: Array<Brew> | undefined) => [newBrew, ...(old ?? [])],
       );
+      await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess();
     },
   });

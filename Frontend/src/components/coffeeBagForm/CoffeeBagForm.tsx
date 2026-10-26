@@ -1,7 +1,7 @@
-import {
-  ROAST_STYLES,
-  useCreateCoffeeBag,
-} from '@/components/coffeeBagForm/useCreateCoffeeBag';
+import { useForm } from '@tanstack/react-form';
+import { useEffect, useRef, useState } from 'react';
+import { CoffeeBagFormSchema, ROAST_STYLES } from './coffeeBagFormValues';
+import type { CoffeeBagFormValues } from './coffeeBagFormValues';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,17 +12,86 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
 
-interface CreateCoffeeBagFormProps {
+const DELETE_CONFIRM_TIMEOUT_MS = 5000;
+
+interface CoffeeBagFormProps {
+  initialValues: CoffeeBagFormValues;
+  submitLabel: string;
+  cancelLabel: string;
+  isLoading: boolean;
+  onSubmit: (values: CoffeeBagFormValues) => Promise<unknown> | void;
   onCancel: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
+  deleteDisabled?: boolean;
+  deleteDisabledReason?: string;
+  resetOnSuccess?: boolean;
 }
 
-export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
-  const { form, isLoading } = useCreateCoffeeBag({
-    onSuccess: () => {
-      onCancel();
+export function CoffeeBagForm({
+  initialValues,
+  submitLabel,
+  cancelLabel,
+  isLoading,
+  onSubmit,
+  onCancel,
+  onDelete,
+  isDeleting = false,
+  deleteDisabled = false,
+  deleteDisabledReason,
+  resetOnSuccess = false,
+}: CoffeeBagFormProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const form = useForm({
+    defaultValues: initialValues,
+    validators: {
+      onChange: CoffeeBagFormSchema,
+      onSubmit: CoffeeBagFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await onSubmit(value);
+      if (resetOnSuccess) {
+        form.reset();
+      }
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current !== null) {
+        clearTimeout(deleteTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleDeleteClick = () => {
+    if (onDelete === undefined || deleteDisabled) {
+      return;
+    }
+
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      if (deleteTimeoutRef.current !== null) {
+        clearTimeout(deleteTimeoutRef.current);
+      }
+      deleteTimeoutRef.current = setTimeout(() => {
+        setConfirmDelete(false);
+      }, DELETE_CONFIRM_TIMEOUT_MS);
+      return;
+    }
+
+    if (deleteTimeoutRef.current !== null) {
+      clearTimeout(deleteTimeoutRef.current);
+    }
+    setConfirmDelete(false);
+    onDelete();
+  };
+
+  const isBusy = isLoading || isDeleting;
 
   return (
     <form
@@ -191,13 +260,43 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
         )}
       </form.Field>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Coffee Bag'}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Hide
-        </Button>
+      <div className="flex flex-wrap items-center gap-2 pt-4">
+        {onDelete !== undefined && (
+          <div className="flex flex-col gap-1">
+            <Button
+              type="button"
+              variant={confirmDelete ? 'destructive' : 'ghost'}
+              className={cn(!confirmDelete && 'text-destructive')}
+              onClick={handleDeleteClick}
+              disabled={isBusy || deleteDisabled}
+            >
+              {isDeleting
+                ? 'Deleting...'
+                : confirmDelete
+                  ? 'Confirm delete'
+                  : 'Delete bag'}
+            </Button>
+            {deleteDisabled && deleteDisabledReason && (
+              <span className="text-xs text-muted-foreground">
+                {deleteDisabledReason}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="ml-auto flex gap-2">
+          <Button type="submit" disabled={isBusy}>
+            {isLoading ? 'Saving...' : submitLabel}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isDeleting}
+          >
+            {cancelLabel}
+          </Button>
+        </div>
       </div>
     </form>
   );

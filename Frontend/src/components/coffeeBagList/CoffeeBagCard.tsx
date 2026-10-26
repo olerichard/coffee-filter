@@ -1,17 +1,23 @@
 import { useRef, useState } from 'react';
+import { PencilIcon } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { useUpdateCoffeeBag } from '@/components/coffeeBagForm/useUpdateCoffeeBag';
 
 type ConfirmAction = 'open' | 'empty';
 
-export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
+interface CoffeeBagCardProps {
+  coffeeBag: CoffeeBagWithUsage;
+  onEdit: (coffeeBag: CoffeeBagWithUsage) => void;
+}
+
+export const CoffeeBagCard = ({ coffeeBag, onEdit }: CoffeeBagCardProps) => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { mutate: updateBag, isLoading } = useUpdateCoffeeBag({});
+  const { updateCoffeeBag, isLoading } = useUpdateCoffeeBag({});
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -33,20 +39,33 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
       const midnightUtc = new Date(
         Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0),
       ).toISOString();
-      const data =
+      const actionData =
         action === 'empty'
           ? { emptied: now.toISOString() }
           : { opened: midnightUtc };
+      const updateData = {
+        roaster: coffeeBag.roaster,
+        name: coffeeBag.name,
+        origin: coffeeBag.origin,
+        roastStyle: coffeeBag.roastStyle,
+        flavourNotes: coffeeBag.flavourNotes,
+        opened: coffeeBag.opened,
+        emptied: coffeeBag.emptied,
+        ...actionData,
+      };
 
-      updateBag(
-        { id: coffeeBag.id, data: { ...coffeeBag, ...data } },
+      void updateCoffeeBag(
+        { id: coffeeBag.id, data: updateData },
         {
           onSuccess: () => {
             setConfirmAction(null);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           },
         },
-      );
+      ).catch(() => {
+        setConfirmAction(null);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      });
     }
   };
 
@@ -63,10 +82,21 @@ export const CoffeeBagCard = ({ coffeeBag }: { coffeeBag: CoffeeBag }) => {
     : coffeeBag.roaster;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="relative overflow-hidden">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="absolute top-2 right-2 z-10 rounded-full"
+        onClick={() => onEdit(coffeeBag)}
+        aria-label="Edit coffee bag"
+        title="Edit coffee bag"
+      >
+        <PencilIcon />
+      </Button>
       <CardContent className="py-0 px-4">
         <div className="flex flex-col gap-3">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pr-10">
             <p className="font-medium truncate">{roasterDisplay}</p>
             <div className="flex flex-wrap items-center gap-x-1 text-sm text-muted-foreground">
               <span>{coffeeBag.origin}</span>

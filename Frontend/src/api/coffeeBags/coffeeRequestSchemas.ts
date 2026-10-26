@@ -14,6 +14,14 @@ export const CoffeeBagResponseSchema = z.object({
 
 export type CoffeeBag = z.infer<typeof CoffeeBagResponseSchema>;
 
+export const CoffeeBagWithUsageResponseSchema = CoffeeBagResponseSchema.extend({
+  brewCount: z.number(),
+});
+
+export type CoffeeBagWithUsage = z.infer<
+  typeof CoffeeBagWithUsageResponseSchema
+>;
+
 export const CoffeeBagCreateRequestSchema = z.object({
   roaster: z.string().min(1).max(100),
   name: z.string().max(100).optional(),
@@ -35,6 +43,7 @@ export const CoffeeBagUpdateRequestSchema = z.object({
   flavourNotes: z.string().max(500).optional(),
   opened: z.string().optional(),
   emptied: z.string().optional(),
+  clearOpened: z.boolean().optional(),
 });
 
 export type CoffeeBagUpdateRequest = z.infer<

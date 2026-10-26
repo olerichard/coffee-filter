@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
+import type { CoffeeBagWithUsage } from '@/api/coffeeBags/coffeeRequestSchemas';
 import type { NewBrewOpenState } from '@/components/newBrew/NewBrewCard';
 import { runViewTransition } from '@/lib/viewTransition';
 import {
@@ -22,6 +23,8 @@ export const Route = createFileRoute('/')({
 
 function DashBoard() {
   const [editingBrew, setEditingBrew] = useState<Brew | null>(null);
+  const [editingCoffeeBag, setEditingCoffeeBag] =
+    useState<CoffeeBagWithUsage | null>(null);
   const [open, setOpen] = useState<NewBrewOpenState>('none');
 
   const transitionOpenTo = (
@@ -41,12 +44,21 @@ function DashBoard() {
   const handleEditBrew = (brew: Brew) => {
     transitionOpenTo('brew', () => {
       setEditingBrew(brew);
+      setEditingCoffeeBag(null);
+    });
+  };
+
+  const handleEditCoffeeBag = (coffeeBag: CoffeeBagWithUsage) => {
+    transitionOpenTo('bag', () => {
+      setEditingCoffeeBag(coffeeBag);
+      setEditingBrew(null);
     });
   };
 
   const handleEditEnd = () => {
     transitionOpenTo('none', () => {
       setEditingBrew(null);
+      setEditingCoffeeBag(null);
     });
   };
 
@@ -56,18 +68,23 @@ function DashBoard() {
         open={open}
         onOpenChange={transitionOpenTo}
         editingBrew={editingBrew}
+        editingCoffeeBag={editingCoffeeBag}
         onEditEnd={handleEditEnd}
       />
-      <ListSection onEditBrew={handleEditBrew} />
+      <ListSection
+        onEditBrew={handleEditBrew}
+        onEditCoffeeBag={handleEditCoffeeBag}
+      />
     </div>
   );
 }
 
 interface ListSectionProps {
   onEditBrew: (brew: Brew) => void;
+  onEditCoffeeBag: (coffeeBag: CoffeeBagWithUsage) => void;
 }
 
-function ListSection({ onEditBrew }: ListSectionProps) {
+function ListSection({ onEditBrew, onEditCoffeeBag }: ListSectionProps) {
   const [view, setView] = useState<'brews' | 'coffeeBags'>('brews');
   const [showEmpty, setShowEmpty] = useState(false);
 
@@ -106,7 +123,7 @@ function ListSection({ onEditBrew }: ListSectionProps) {
       {view === 'brews' ? (
         <PreviousBrews onEdit={onEditBrew} />
       ) : (
-        <CoffeeBagList showEmpty={showEmpty} />
+        <CoffeeBagList showEmpty={showEmpty} onEdit={onEditCoffeeBag} />
       )}
     </div>
   );

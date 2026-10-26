@@ -1,45 +1,45 @@
 import z from 'zod';
 import { apiClient } from '../base/apiClient';
-import {
-  type CoffeeBagUpdateRequest,
-  type CoffeeBagCreateRequest,
-  type CoffeeBag,
-  CoffeeBagResponseSchema,
+import { CoffeeBagWithUsageResponseSchema } from './coffeeRequestSchemas';
+import type {
+  CoffeeBagCreateRequest,
+  CoffeeBagUpdateRequest,
+  CoffeeBagWithUsage,
 } from './coffeeRequestSchemas';
 
 class CoffeeBagClient {
-  getUrl(...args: string[]) {
+  getUrl(...args: Array<string>) {
     return apiClient.buildUrl('CoffeeBags', ...args);
   }
 
   async getCoffeeBags(includeEmpty = false) {
     const params = includeEmpty ? '?includeEmpty=true' : '';
-    const res = await apiClient.fetch<CoffeeBag[]>(
+    const res = await apiClient.fetch<Array<CoffeeBagWithUsage>>(
       'GET',
       this.getUrl(params),
       null,
-      z.array(CoffeeBagResponseSchema),
+      z.array(CoffeeBagWithUsageResponseSchema),
     );
     return res;
   }
 
   async createCoffeeBag(data: CoffeeBagCreateRequest) {
-    const res = await apiClient.fetch<CoffeeBag>(
+    const res = await apiClient.fetch<CoffeeBagWithUsage>(
       'POST',
       this.getUrl(),
       data,
-      CoffeeBagResponseSchema,
+      CoffeeBagWithUsageResponseSchema,
     );
 
     return res;
   }
 
   async updateCoffeeBag(id: number, data: CoffeeBagUpdateRequest) {
-    const res = await apiClient.fetch<CoffeeBag>(
+    const res = await apiClient.fetch<CoffeeBagWithUsage>(
       'PUT',
       this.getUrl(id.toString()),
       data,
-      CoffeeBagResponseSchema,
+      CoffeeBagWithUsageResponseSchema,
     );
 
     return res;

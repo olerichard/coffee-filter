@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
+import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 
 interface UseDeleteBrewOptions {
@@ -17,6 +18,7 @@ export function useDeleteBrew({ onSuccess }: UseDeleteBrewOptions) {
         (old: Array<Brew> | undefined) =>
           old?.filter((brew) => brew.id !== id) ?? [],
       );
+      await queryClient.invalidateQueries({ queryKey: coffeeBagKeys.all });
       onSuccess();
     },
   });

@@ -167,6 +167,7 @@ public class CoffeeBagsController : BaseController
 
     var existingCoffeeBag = await _dbContext.CoffeeBags
       .Where(cb => cb.Id == id && cb.UserId == userId.Value)
+      .Include(cb => cb.Brews)
       .FirstOrDefaultAsync();
 
     if (existingCoffeeBag == null)
@@ -188,6 +189,7 @@ public class CoffeeBagsController : BaseController
   [HttpDelete("{id}")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status409Conflict)]
   [ProducesResponseType(StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> DeleteCoffeeBag(int id)
   {
@@ -204,6 +206,14 @@ public class CoffeeBagsController : BaseController
     if (coffeeBag == null)
     {
       return NotFound();
+    }
+
+    var hasBrews = await _dbContext.Brews
+      .AnyAsync(b => b.CoffeeBagId == coffeeBag.Id && b.UserId == userId.Value);
+
+    if (hasBrews)
+    {
+      return Conflict(new { message = "This coffee bag has been used in a brew and cannot be deleted." });
     }
 
     _dbContext.CoffeeBags.Remove(coffeeBag);

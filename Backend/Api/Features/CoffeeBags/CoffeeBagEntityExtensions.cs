@@ -18,6 +18,7 @@ public static class CoffeeBagEntityExtensions
       FlavourNotes = entity.FlavourNotes,
       Opened = entity.Opened,
       Emptied = entity.Emptied,
+      BrewCount = entity.Brews.Count,
     };
   }
 
@@ -48,7 +49,9 @@ public static class CoffeeBagEntityExtensions
       entity.RoastStyle = request.RoastStyle;
     if (request.FlavourNotes is not null)
       entity.FlavourNotes = request.FlavourNotes;
-    if (request.Opened is not null)
+    if (request.ClearOpened)
+      entity.Opened = null;
+    else if (request.Opened is not null)
       entity.Opened = request.Opened;
     if (request.Emptied is not null)
       entity.Emptied = request.Emptied;

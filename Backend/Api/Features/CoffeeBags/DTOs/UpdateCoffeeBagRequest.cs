@@ -11,6 +11,7 @@ public record UpdateCoffeeBagRequest
   public string? FlavourNotes { get; set; }
   public DateTime? Opened { get; set; }
   public DateTime? Emptied { get; set; }
+  public bool ClearOpened { get; set; }
 }
 
 public class UpdateCoffeeBagRequestValidator : AbstractValidator<UpdateCoffeeBagRequest>
