@@ -83,6 +83,16 @@ namespace Api.Features.Brews
 
      
 
+      var coffeeBag = await _dbContext.CoffeeBags
+        .FirstOrDefaultAsync(cb => cb.Id == request.CoffeeBagId && cb.UserId == userId.Value);
+
+      if (coffeeBag == null)
+      {
+        return BadRequest("Invalid CoffeeBag ID or access denied");
+      }
+
+      coffeeBag.Opened ??= DateTime.UtcNow;
+
       var brew = request.ToBrew(userId.Value);
       _dbContext.Brews.Add(brew);
       await _dbContext.SaveChangesAsync();
@@ -180,6 +190,8 @@ namespace Api.Features.Brews
         {
           return BadRequest("Invalid CoffeeBag ID or access denied");
         }
+
+        coffeeBag.Opened ??= DateTime.UtcNow;
       }
 
       existingBrew.UpdateBrew(request);
