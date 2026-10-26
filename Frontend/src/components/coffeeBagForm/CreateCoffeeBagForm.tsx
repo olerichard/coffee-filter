@@ -32,7 +32,7 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
       }}
       className="flex flex-col gap-4"
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <form.Field name="roaster">
           {(field) => (
             <Field>
@@ -109,7 +109,7 @@ export function CreateCoffeeBagForm({ onCancel }: CreateCoffeeBagFormProps) {
         </form.Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <form.Field name="roastStyle">
           {(field) => (
             <Field>

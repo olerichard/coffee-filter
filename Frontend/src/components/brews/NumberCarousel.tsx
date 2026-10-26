@@ -35,7 +35,7 @@ export function NumberCarousel({
       className={cn(
         'relative rounded-md border bg-background',
         'p-4 w-32 text-center',
-        'text-6xl font-bold tabular-nums',
+        'text-5xl sm:text-6xl font-bold tabular-nums',
         'cursor-grab active:cursor-grabbing',
         'transition-colors duration-150',
         isDragging && 'bg-active border-primary',
@@ -62,12 +62,7 @@ export function NumberCarousel({
         >
           {displayWhole}
         </div>
-        <div
-          className={cn(
-            'text-4xl',
-            !allowDecimal && 'hidden',
-          )}
-        >
+        <div className={cn('text-3xl sm:text-4xl', !allowDecimal && 'hidden')}>
           .
         </div>
         <div
