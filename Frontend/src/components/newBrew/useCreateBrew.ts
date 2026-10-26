@@ -1,84 +1,27 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
 import type { Brew, BrewCreateRequest } from '@/api/brews/brewRequestSchemas';
 import { apiClients } from '@/api/apiClients';
-import {
-  BrewMethodResponseSchema,
-  type BrewMethod,
-} from '@/api/brewMethods/brewMethodRequestSchemas';
-
-const BrewFormSchema = z.object({
-  brewMethod: BrewMethodResponseSchema,
-  coffeeBagId: z.number().min(1, 'Coffee bag is required'),
-  brewTasteScore: z.number().max(5),
-  coffeeDose: z.number().positive('Dose is required'),
-  grindSize: z.number().positive('Grind size is required'),
-  brewTime: z.number().positive('Brew time is required'),
-  brewWeight: z.number().positive('Brew weight is required'),
-  notes: z.string().optional(),
-});
-
-type BrewFormValues = z.infer<typeof BrewFormSchema>;
-
-export function getDefaultValues(method: BrewMethod): BrewFormValues {
-  return {
-    brewMethod: method,
-    coffeeBagId: 0,
-    brewTasteScore: 0,
-    coffeeDose: method.dose.default,
-    grindSize: method.grindSize.default,
-    brewTime: method.brewTime.default,
-    brewWeight: method.brewWeight.default,
-    notes: '',
-  };
-}
 
 interface UseCreateBrewOptions {
-  initialSelectedMethod: BrewMethod;
   onSuccess: () => void;
 }
 
-export function useCreateBrew({
-  initialSelectedMethod,
-  onSuccess,
-}: UseCreateBrewOptions) {
+export function useCreateBrew({ onSuccess }: UseCreateBrewOptions) {
   const queryClient = useQueryClient();
 
-  const form = useForm({
-    defaultValues: getDefaultValues(initialSelectedMethod),
-    validators: {
-      onChange: BrewFormSchema,
-      onSubmit: BrewFormSchema,
-    },
-    onSubmit: ({ value }) => {
-      createBrewMutation.mutate({
-        coffeeBagId: value.coffeeBagId,
-        brewMethodId: value.brewMethod.id,
-        brewTasteScore: value.brewTasteScore,
-        coffeeDose: value.coffeeDose,
-        grindSize: value.grindSize,
-        brewTime: value.brewTime,
-        brewWeight: value.brewWeight,
-        notes: value.notes,
-      });
-    },
-  });
-
-  const createBrewMutation = useMutation({
+  const mutation = useMutation({
     mutationFn: (data: BrewCreateRequest) => apiClients.brew.createBrew(data),
     onSuccess: async (newBrew) => {
       await queryClient.setQueryData(
         ['brews'],
         (old: Array<Brew> | undefined) => [newBrew, ...(old ?? [])],
       );
-      form.reset();
       onSuccess();
     },
   });
 
   return {
-    form,
-    isLoading: createBrewMutation.isPending,
+    createBrew: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
 }

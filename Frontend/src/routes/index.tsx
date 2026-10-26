@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import type { Brew } from '@/api/brews/brewRequestSchemas';
+import type { NewBrewOpenState } from '@/components/newBrew/NewBrewCard';
+import { runViewTransition } from '@/lib/viewTransition';
 import {
   Select,
   SelectContent,
@@ -18,15 +21,53 @@ export const Route = createFileRoute('/')({
 });
 
 function DashBoard() {
+  const [editingBrew, setEditingBrew] = useState<Brew | null>(null);
+  const [open, setOpen] = useState<NewBrewOpenState>('none');
+
+  const transitionOpenTo = (
+    state: NewBrewOpenState,
+    beforeUpdate?: () => void,
+  ) => {
+    if (state !== 'none' && window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    runViewTransition(() => {
+      beforeUpdate?.();
+      setOpen(state);
+    });
+  };
+
+  const handleEditBrew = (brew: Brew) => {
+    transitionOpenTo('brew', () => {
+      setEditingBrew(brew);
+    });
+  };
+
+  const handleEditEnd = () => {
+    transitionOpenTo('none', () => {
+      setEditingBrew(null);
+    });
+  };
+
   return (
     <div>
-      <NewBrewCard />
-      <ListSection />
+      <NewBrewCard
+        open={open}
+        onOpenChange={transitionOpenTo}
+        editingBrew={editingBrew}
+        onEditEnd={handleEditEnd}
+      />
+      <ListSection onEditBrew={handleEditBrew} />
     </div>
   );
 }
 
-function ListSection() {
+interface ListSectionProps {
+  onEditBrew: (brew: Brew) => void;
+}
+
+function ListSection({ onEditBrew }: ListSectionProps) {
   const [view, setView] = useState<'brews' | 'coffeeBags'>('brews');
   const [showEmpty, setShowEmpty] = useState(false);
 
@@ -63,7 +104,7 @@ function ListSection() {
       </div>
 
       {view === 'brews' ? (
-        <PreviousBrews />
+        <PreviousBrews onEdit={onEditBrew} />
       ) : (
         <CoffeeBagList showEmpty={showEmpty} />
       )}

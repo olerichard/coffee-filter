@@ -185,7 +185,17 @@ namespace Api.Features.Brews
       existingBrew.UpdateBrew(request);
       await _dbContext.SaveChangesAsync();
 
-      return Ok(existingBrew.ToBrewResponse());
+      var updatedBrew = await _dbContext.Brews
+        .Include(b => b.CoffeeBag)
+        .Include(b => b.BrewMethod)
+        .FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId.Value);
+
+      if (updatedBrew == null)
+      {
+        return NotFound();
+      }
+
+      return Ok(updatedBrew.ToBrewResponse());
     }
 
     /// <summary>

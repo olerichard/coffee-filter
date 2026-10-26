@@ -1,10 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { PencilIcon } from 'lucide-react';
 import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { apiClients } from '@/api/apiClients';
 import { StarDisplay } from '@/components/ui/StarDisplay';
 
-export const PreviousBrews = () => {
+interface PreviousBrewsProps {
+  onEdit: (brew: Brew) => void;
+}
+
+export const PreviousBrews = ({ onEdit }: PreviousBrewsProps) => {
   const query = useQuery({
     queryKey: ['brews'],
     queryFn: () => apiClients.brew.getBrews(),
@@ -43,14 +49,20 @@ export const PreviousBrews = () => {
     <div className="flex flex-col gap-4 py-1.5">
       <div className="flex flex-col gap-3">
         {brews.map((brew) => (
-          <BrewCard key={brew.id} brew={brew} />
+          <BrewCard key={brew.id} brew={brew} onEdit={onEdit} />
         ))}
       </div>
     </div>
   );
 };
 
-const BrewCard = ({ brew }: { brew: Brew }) => {
+const BrewCard = ({
+  brew,
+  onEdit,
+}: {
+  brew: Brew;
+  onEdit: (brew: Brew) => void;
+}) => {
   const formattedDate = new Date(brew.brewedOn).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -58,10 +70,21 @@ const BrewCard = ({ brew }: { brew: Brew }) => {
   });
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="relative overflow-hidden">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="absolute top-2 right-2 z-10 rounded-full"
+        onClick={() => onEdit(brew)}
+        aria-label="Edit brew"
+        title="Edit brew"
+      >
+        <PencilIcon />
+      </Button>
       <CardContent className="py-0 px-4">
         <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-2 pr-10">
             <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{brew.coffeeBag.roaster}</p>
               <div className="flex flex-wrap items-center gap-x-1 text-sm text-muted-foreground">

@@ -1,53 +1,32 @@
-import { startTransition, useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { CreateBrew } from './CreateBrew';
+import { EditBrew } from './EditBrew';
+import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CreateCoffeeBagForm } from '@/components/coffeeBagForm/CreateCoffeeBagForm';
 
-type OpenState = 'none' | 'bag' | 'brew';
-
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => unknown;
-};
+export type NewBrewOpenState = 'none' | 'bag' | 'brew';
 
 const SCROLL_THRESHOLD = 8;
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+interface NewBrewCardProps {
+  open: NewBrewOpenState;
+  onOpenChange: (state: NewBrewOpenState) => void;
+  editingBrew?: Brew | null;
+  onEditEnd: () => void;
+}
 
-const runViewTransition = (update: () => void) => {
-  if (
-    typeof document === 'undefined' ||
-    prefersReducedMotion() ||
-    !('startViewTransition' in document)
-  ) {
-    startTransition(update);
-    return;
-  }
-
-  (document as ViewTransitionDocument).startViewTransition(() => {
-    flushSync(update);
-  });
-};
-
-export const NewBrewCard = () => {
-  const [open, setOpen] = useState<OpenState>('none');
+export const NewBrewCard = ({
+  open,
+  onOpenChange,
+  editingBrew = null,
+  onEditEnd,
+}: NewBrewCardProps) => {
   const [scrolled, setScrolled] = useState(false);
 
   const compact = scrolled;
-
-  const transitionOpenTo = (state: OpenState) => {
-    if (state !== 'none' && window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    }
-
-    runViewTransition(() => {
-      setOpen(state);
-    });
-  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -72,15 +51,12 @@ export const NewBrewCard = () => {
             <CardContent className={cn(compact && 'px-1')}>
               <div className="grid grid-cols-3 gap-4">
                 <Button
-                  onClick={() => transitionOpenTo('brew')}
+                  onClick={() => onOpenChange('brew')}
                   className="col-span-2"
                 >
                   New Brew
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => transitionOpenTo('bag')}
-                >
+                <Button variant="outline" onClick={() => onOpenChange('bag')}>
                   Add Bag
                 </Button>
               </div>
@@ -93,10 +69,18 @@ export const NewBrewCard = () => {
         className="bg-card border rounded-2xl shadow-md px-6 py-6"
       >
         <div hidden={open !== 'brew'}>
-          <CreateBrew onCancel={() => transitionOpenTo('none')} />
+          {editingBrew !== null ? (
+            <EditBrew
+              key={editingBrew.id}
+              brew={editingBrew}
+              onCancel={onEditEnd}
+            />
+          ) : (
+            <CreateBrew onCancel={() => onOpenChange('none')} />
+          )}
         </div>
         <div hidden={open !== 'bag'}>
-          <CreateCoffeeBagForm onCancel={() => transitionOpenTo('none')} />
+          <CreateCoffeeBagForm onCancel={() => onOpenChange('none')} />
         </div>
       </div>
     </>
