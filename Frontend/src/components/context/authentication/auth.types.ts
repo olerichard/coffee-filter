@@ -23,9 +23,3 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
 }
-
-export type AuthAction =
-  | { type: 'AUTH_START' }
-  | { type: 'AUTH_SUCCESS'; payload: { user: User } }
-  | { type: 'AUTH_FAILURE' }
-  | { type: 'LOGOUT' };

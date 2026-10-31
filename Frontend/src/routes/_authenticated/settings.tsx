@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-export const Route = createFileRoute('/settings')({
+export const Route = createFileRoute('/_authenticated/settings')({
   component: SettingsPage,
 });
 

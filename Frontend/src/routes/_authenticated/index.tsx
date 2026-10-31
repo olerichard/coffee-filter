@@ -27,7 +27,7 @@ import { NewBrewCard } from '@/components/newBrew/NewBrewCard';
 import { PreviousBrews } from '@/components/brews/PreviousBrews';
 import { CoffeeBagList } from '@/components/coffeeBagList/CoffeeBagList';
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/_authenticated/')({
   validateSearch: validateDashboardSearch,
   component: DashBoard,
 });

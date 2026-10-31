@@ -9,7 +9,6 @@ import { Suspense, lazy } from 'react';
 import appCss from '../styles.css?url';
 
 import type { QueryClient } from '@tanstack/react-query';
-import { Authorization } from '@/components/authorization/authorization';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 
 interface RouterContext {
@@ -56,9 +55,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <BaseLayout>
-          <Authorization>{children}</Authorization>
-        </BaseLayout>
+        <BaseLayout>{children}</BaseLayout>
         {Devtools ? (
           <Suspense fallback={null}>
             <Devtools />

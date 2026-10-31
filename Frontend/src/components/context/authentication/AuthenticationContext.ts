@@ -1,8 +1,20 @@
-import React, { createContext, useContext, useEffect, useReducer } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  ensureSession,
+  getServerSnapshot,
+  getSnapshot,
+  setAnonymous,
+  setAuthenticated,
+  subscribe,
+} from './authSession';
 import type { ReactNode } from 'react';
 import type {
-  AuthAction,
   AuthContextType,
   AuthState,
   LoginRequest,
@@ -13,45 +25,6 @@ import { broadcastLogout, subscribeToLogout } from '@/api/auth/authChannel';
 import { tokenStore } from '@/api/auth/tokenStore';
 import { AUTH_UNAUTHORIZED_EVENT } from '@/api/base/apiClient';
 
-const initialState: AuthState = {
-  user: null,
-  isLoading: true,
-  isAuthenticated: false,
-};
-
-export function authReducer(state: AuthState, action: AuthAction): AuthState {
-  switch (action.type) {
-    case 'AUTH_START':
-      return {
-        ...state,
-        isLoading: true,
-      };
-    case 'AUTH_SUCCESS':
-      return {
-        ...state,
-        user: action.payload.user,
-        isLoading: false,
-        isAuthenticated: true,
-      };
-    case 'AUTH_FAILURE':
-      return {
-        ...state,
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      };
-    case 'LOGOUT':
-      return {
-        ...state,
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      };
-    default:
-      return state;
-  }
-}
-
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -61,7 +34,11 @@ const AuthenticationContext = createContext<AuthContextType | undefined>(
 );
 
 export function AuthenticationProvider({ children }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -69,46 +46,24 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
 
-    const handleUnauthorized = () => {
+    const handleSignedOut = () => {
       tokenStore.clear();
       queryClient.clear();
-      broadcastLogout();
-      dispatch({ type: 'LOGOUT' });
+      setAnonymous();
     };
 
-    const unsubscribeFromLogout = subscribeToLogout(() => {
-      tokenStore.clear();
-      queryClient.clear();
-      dispatch({ type: 'LOGOUT' });
-    });
+    const handleUnauthorized = () => {
+      broadcastLogout();
+      handleSignedOut();
+    };
+
+    const unsubscribeFromLogout = subscribeToLogout(handleSignedOut);
 
     window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
 
-    const restoreSession = async () => {
-      try {
-        const response = await authClient.refresh();
-
-        if (response) {
-          queryClient.clear();
-          dispatch({
-            type: 'AUTH_SUCCESS',
-            payload: { user: response.user },
-          });
-        } else {
-          tokenStore.clear();
-          queryClient.clear();
-          dispatch({ type: 'AUTH_FAILURE' });
-        }
-      } catch {
-        // A network failure must not destroy the refresh cookie. The user can
-        // reload or sign in again without losing the underlying session.
-        tokenStore.clear();
-        queryClient.clear();
-        dispatch({ type: 'AUTH_FAILURE' });
-      }
-    };
-
-    void restoreSession();
+    // Guards call `ensureSession` too; it resolves once and both callers share
+    // the result.
+    void ensureSession();
 
     return () => {
       window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
@@ -118,7 +73,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
   const login = async (credentials: LoginRequest) => {
     queryClient.clear();
-    dispatch({ type: 'AUTH_START' });
 
     try {
       const response = await authClient.login(credentials);
@@ -127,19 +81,15 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       // tabs so they cannot keep acting as the previous user.
       broadcastLogout();
 
-      dispatch({
-        type: 'AUTH_SUCCESS',
-        payload: { user: response.user },
-      });
+      setAuthenticated(response.user);
     } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' });
+      setAnonymous();
       throw error;
     }
   };
 
   const register = async (request: RegisterRequest) => {
     queryClient.clear();
-    dispatch({ type: 'AUTH_START' });
 
     try {
       const response = await authClient.register(request);
@@ -148,12 +98,9 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       // they cannot keep acting as a previously signed-in user.
       broadcastLogout();
 
-      dispatch({
-        type: 'AUTH_SUCCESS',
-        payload: { user: response.user },
-      });
+      setAuthenticated(response.user);
     } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' });
+      setAnonymous();
       throw error;
     }
   };
@@ -164,7 +111,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     } finally {
       queryClient.clear();
       broadcastLogout();
-      dispatch({ type: 'LOGOUT' });
+      setAnonymous();
     }
   };
 
@@ -174,8 +121,14 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     } finally {
       queryClient.clear();
       broadcastLogout();
-      dispatch({ type: 'LOGOUT' });
+      setAnonymous();
     }
+  };
+
+  const state: AuthState = {
+    user: snapshot.user,
+    isLoading: snapshot.status === 'unknown',
+    isAuthenticated: snapshot.status === 'authenticated',
   };
 
   const contextValue: AuthContextType = {

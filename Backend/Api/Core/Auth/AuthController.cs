@@ -379,7 +379,11 @@ namespace Api.Core.Auth
       {
         return StatusCode(
           StatusCodes.Status403Forbidden,
-          new { message = "Sign-up is disabled." });
+          new
+          {
+            code = "signup_disabled",
+            message = "Sign-up is disabled."
+          });
       }
 
       if (!InviteCodeMatches(request.InviteCode, _signupSettings.InviteCode))
@@ -388,7 +392,12 @@ namespace Api.Core.Auth
           "Registration rejected: invalid invite code from {IpAddress}.",
           GetIpAddress());
 
-        return BadRequest(new { message = "Invalid invite code." });
+        return BadRequest(new
+        {
+          code = "invite_code_invalid",
+          field = "inviteCode",
+          message = "That invite code is not valid."
+        });
       }
 
       var email = NormalizeEmail(request.Email);
@@ -398,7 +407,11 @@ namespace Api.Core.Auth
 
       if (emailExists)
       {
-        return Conflict(new { message = "An account with that email already exists." });
+        return Conflict(new
+        {
+          code = "email_exists",
+          message = "An account with that email already exists."
+        });
       }
 
       var now = _timeProvider.GetUtcNow().UtcDateTime;
@@ -433,7 +446,11 @@ namespace Api.Core.Auth
         // existence check above and this insert.
         await transaction.RollbackAsync(cancellationToken);
 
-        return Conflict(new { message = "An account with that email already exists." });
+        return Conflict(new
+        {
+          code = "email_exists",
+          message = "An account with that email already exists."
+        });
       }
 
       var session = await _refreshTokenService.CreateAsync(

@@ -2,6 +2,7 @@ import { AuthResponseSchema, SignupStatusSchema } from './schemas';
 import { refreshSession } from './sessionRefresh';
 import { tokenStore } from './tokenStore';
 import type {
+  AuthField,
   AuthResponse,
   ChangePasswordRequest,
   LoginRequest,
@@ -10,7 +11,46 @@ import type {
 import { apiClient } from '@/api/base/apiClient';
 import { API_BASE_URL } from '@/api/base/apiConfig';
 
-async function readErrorMessage(response: Response): Promise<string | null> {
+interface AuthApiErrorOptions {
+  status: number;
+  code?: string | null;
+  message: string;
+  fieldErrors?: Partial<Record<AuthField, string>>;
+}
+
+/**
+ * Error thrown by the auth endpoints. Carries enough structure for the forms to
+ * put each server-side problem next to the input that caused it.
+ */
+export class AuthApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly fieldErrors: Partial<Record<AuthField, string>>;
+
+  constructor({ status, code, message, fieldErrors }: AuthApiErrorOptions) {
+    super(message);
+    this.name = 'AuthApiError';
+    this.status = status;
+    this.code = code ?? null;
+    this.fieldErrors = fieldErrors ?? {};
+  }
+
+  get hasFieldErrors(): boolean {
+    return Object.keys(this.fieldErrors).length > 0;
+  }
+}
+
+const FIELD_NAMES: Partial<Record<string, AuthField>> = {
+  email: 'email',
+  password: 'password',
+  displayname: 'displayName',
+  confirmpassword: 'confirmPassword',
+  invitecode: 'inviteCode',
+};
+
+async function readJsonBody(
+  response: Response,
+): Promise<Record<string, unknown> | null> {
   try {
     const contentType = response.headers.get('content-type') ?? '';
 
@@ -20,21 +60,47 @@ async function readErrorMessage(response: Response): Promise<string | null> {
 
     const body: unknown = await response.json();
 
-    if (!body || typeof body !== 'object') {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return null;
     }
 
-    const record = body as Record<string, unknown>;
+    return body as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
 
-    if (typeof record.message === 'string' && record.message.length > 0) {
-      return record.message;
+/**
+ * Turns an unsuccessful auth response into an AuthApiError. Field level
+ * problems end up in `fieldErrors`, everything else in `message`.
+ */
+export async function parseAuthError(
+  response: Response,
+  fallbackMessage: string,
+): Promise<AuthApiError> {
+  const body = await readJsonBody(response);
+  const fieldErrors: Partial<Record<AuthField, string>> = {};
+  let code: string | null = null;
+  let message: string | null = null;
+
+  if (body) {
+    if (typeof body.code === 'string') {
+      code = body.code;
     }
 
-    const errors = record.errors;
+    if (typeof body.message === 'string' && body.message.length > 0) {
+      message = body.message;
+    }
 
-    if (errors && typeof errors === 'object') {
-      for (const value of Object.values(errors as Record<string, unknown>)) {
-        if (!Array.isArray(value)) {
+    const errors = body.errors;
+
+    if (errors && typeof errors === 'object' && !Array.isArray(errors)) {
+      for (const [key, value] of Object.entries(
+        errors as Record<string, unknown>,
+      )) {
+        const field: AuthField | undefined = FIELD_NAMES[key.toLowerCase()];
+
+        if (!field || !Array.isArray(value)) {
           continue;
         }
 
@@ -43,49 +109,99 @@ async function readErrorMessage(response: Response): Promise<string | null> {
         );
 
         if (first) {
-          return first;
+          fieldErrors[field] ??= first;
         }
       }
     }
-  } catch {
-    return null;
   }
 
-  return null;
+  if (code === 'email_exists') {
+    fieldErrors.email ??=
+      message ?? 'An account with that email already exists.';
+  } else if (code === 'invite_code_invalid') {
+    fieldErrors.inviteCode ??= message ?? 'That invite code is not valid.';
+  }
+
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  let formMessage = message;
+
+  if (!formMessage && !hasFieldErrors) {
+    if (response.status === 429) {
+      formMessage = 'Too many attempts. Try again later.';
+    } else if (response.status === 409) {
+      fieldErrors.email = 'An account with that email already exists.';
+    } else {
+      formMessage = fallbackMessage;
+    }
+  }
+
+  return new AuthApiError({
+    status: response.status,
+    code,
+    message:
+      formMessage ??
+      Object.values(fieldErrors).find((value) => value.length > 0) ??
+      fallbackMessage,
+    fieldErrors,
+  });
+}
+
+async function postAuth(path: string, body: unknown): Promise<Response> {
+  try {
+    return await fetch(`${API_BASE_URL}/auth/${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: body === undefined ? null : JSON.stringify(body),
+    });
+  } catch {
+    throw new AuthApiError({
+      status: 0,
+      code: 'network_error',
+      message: 'Unable to reach the server. Try again.',
+    });
+  }
+}
+
+async function parseAuthResponse(
+  response: Response,
+  fallbackMessage: string,
+): Promise<AuthResponse> {
+  try {
+    return AuthResponseSchema.parse(await response.json());
+  } catch {
+    throw new AuthApiError({
+      status: response.status,
+      code: 'invalid_response',
+      message: fallbackMessage,
+    });
+  }
 }
 
 class AuthClient {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     tokenStore.clear();
 
-    let response: Response;
-
-    try {
-      response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-    } catch {
-      throw new Error('Unable to reach the server. Try again.');
-    }
+    const response = await postAuth('login', credentials);
 
     if (!response.ok) {
       if (response.status === 401) {
-        throw new Error('Invalid email or password.');
+        throw new AuthApiError({
+          status: 401,
+          code: 'invalid_credentials',
+          message: 'Invalid email or password.',
+        });
       }
 
-      if (response.status === 429) {
-        throw new Error('Too many login attempts. Try again later.');
-      }
-
-      throw new Error('Unable to sign in. Try again.');
+      throw await parseAuthError(response, 'Unable to sign in. Try again.');
     }
 
-    const data = AuthResponseSchema.parse(await response.json());
+    const data = await parseAuthResponse(
+      response,
+      'We could not finish signing you in. Try again.',
+    );
     tokenStore.setSession(data.accessToken, data.expiresAt);
     return data;
   }
@@ -93,40 +209,19 @@ class AuthClient {
   async register(request: RegisterRequest): Promise<AuthResponse> {
     tokenStore.clear();
 
-    let response: Response;
-
-    try {
-      response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
-    } catch {
-      throw new Error('Unable to reach the server. Try again.');
-    }
+    const response = await postAuth('register', request);
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error('Too many sign-up attempts. Try again later.');
-      }
-
-      const message = await readErrorMessage(response);
-
-      if (message) {
-        throw new Error(message);
-      }
-
-      if (response.status === 409) {
-        throw new Error('An account with that email already exists.');
-      }
-
-      throw new Error('Unable to create your account. Try again.');
+      throw await parseAuthError(
+        response,
+        'Unable to create your account. Try again.',
+      );
     }
 
-    const data = AuthResponseSchema.parse(await response.json());
+    const data = await parseAuthResponse(
+      response,
+      'Your account may have been created. Try signing in.',
+    );
     tokenStore.setSession(data.accessToken, data.expiresAt);
     return data;
   }

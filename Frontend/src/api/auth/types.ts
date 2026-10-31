@@ -20,3 +20,6 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+export type AuthField =
+  'displayName' | 'email' | 'password' | 'confirmPassword' | 'inviteCode';
