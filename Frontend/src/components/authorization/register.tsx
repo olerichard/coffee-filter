@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { AuthField } from '@/api/auth/types';
+import type {
+  FieldErrors,
+  RegisterForm,
+} from '@/components/authorization/authFormValidation';
 import { AuthApiError } from '@/api/auth/authClient';
+import {
+  REGISTER_FIELDS,
+  registerFormSchema,
+  toFieldErrors,
+  visibleFieldErrors,
+} from '@/components/authorization/authFormValidation';
 import { useAuth } from '@/components/context/authentication/AuthenticationContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,16 +33,6 @@ interface RegisterProps {
   onBackToLogin: () => void;
 }
 
-type RegisterForm = {
-  displayName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  inviteCode: string;
-};
-
-type FieldErrors = Partial<Record<AuthField, string>>;
-
 const emptyForm: RegisterForm = {
   displayName: '',
   email: '',
@@ -41,9 +41,16 @@ const emptyForm: RegisterForm = {
   inviteCode: '',
 };
 
+const allTouched = Object.fromEntries(
+  REGISTER_FIELDS.map((field) => [field, true]),
+) as Partial<Record<AuthField, boolean>>;
+
 export const Register = ({ onBackToLogin }: RegisterProps) => {
   const [form, setForm] = useState<RegisterForm>(emptyForm);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>(
+    {},
+  );
+  const [serverErrors, setServerErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [signupDisabled, setSignupDisabled] = useState(false);
 
@@ -52,12 +59,12 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
   const register = useMutation({
     mutationFn: auth.register,
     onMutate: () => {
-      setFieldErrors({});
+      setServerErrors({});
       setFormError(null);
     },
     onError: (error) => {
       if (error instanceof AuthApiError) {
-        setFieldErrors(error.fieldErrors);
+        setServerErrors(error.fieldErrors);
         setFormError(error.hasFieldErrors ? null : error.message);
 
         if (error.code === 'signup_disabled') {
@@ -75,11 +82,26 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
     },
   });
 
+  const parsed = registerFormSchema.safeParse(form);
+  const validation = parsed.success ? {} : toFieldErrors(parsed.error);
+  const errors = visibleFieldErrors(
+    REGISTER_FIELDS,
+    touched,
+    validation,
+    serverErrors,
+  );
+
+  const markTouched = (field: AuthField) => {
+    setTouched((current) =>
+      current[field] ? current : { ...current, [field]: true },
+    );
+  };
+
   const updateField = (field: keyof RegisterForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
     setFormError(null);
 
-    setFieldErrors((current) => {
+    setServerErrors((current) => {
       if (!current[field]) {
         return current;
       }
@@ -89,28 +111,6 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
       return next;
     });
   };
-
-  const localPasswordError =
-    form.password.length > 0 && form.password.length < 12
-      ? 'Use at least 12 characters for your password.'
-      : undefined;
-
-  const localConfirmPasswordError =
-    form.confirmPassword.length > 0 && form.password !== form.confirmPassword
-      ? 'The passwords do not match.'
-      : undefined;
-
-  const passwordError = fieldErrors.password ?? localPasswordError;
-  const confirmPasswordError =
-    fieldErrors.confirmPassword ?? localConfirmPasswordError;
-
-  const canSubmit =
-    form.displayName.trim().length > 0 &&
-    form.email.trim().length > 0 &&
-    form.password.length >= 12 &&
-    form.password === form.confirmPassword &&
-    form.inviteCode.trim().length > 0 &&
-    !register.isPending;
 
   if (signupDisabled) {
     return (
@@ -138,77 +138,83 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
       </CardHeader>
       <CardContent>
         <form
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
 
-            if (!canSubmit) {
+            // Submitting counts as leaving every field, so the user sees all
+            // problems at once instead of one at a time.
+            setTouched(allTouched);
+
+            if (register.isPending || !parsed.success) {
               return;
             }
 
             register.mutate({
-              displayName: form.displayName.trim(),
-              email: form.email.trim(),
-              password: form.password,
-              inviteCode: form.inviteCode.trim(),
+              displayName: parsed.data.displayName,
+              email: parsed.data.email,
+              password: parsed.data.password,
+              inviteCode: parsed.data.inviteCode,
             });
           }}
         >
           <FieldGroup>
-            <Field data-invalid={Boolean(fieldErrors.displayName)}>
+            <Field data-invalid={Boolean(errors.displayName)}>
               <FieldLabel htmlFor="display-name">Display name</FieldLabel>
               <Input
                 id="display-name"
                 autoComplete="name"
-                aria-invalid={Boolean(fieldErrors.displayName)}
+                aria-invalid={Boolean(errors.displayName)}
                 aria-describedby={
-                  fieldErrors.displayName ? 'display-name-error' : undefined
+                  errors.displayName ? 'display-name-error' : undefined
                 }
                 value={form.displayName}
                 onChange={(event) =>
                   updateField('displayName', event.target.value)
                 }
+                onBlur={() => markTouched('displayName')}
               />
               <FieldError id="display-name-error">
-                {fieldErrors.displayName}
+                {errors.displayName}
               </FieldError>
             </Field>
-            <Field data-invalid={Boolean(fieldErrors.email)}>
+            <Field data-invalid={Boolean(errors.email)}>
               <FieldLabel htmlFor="register-email">Email</FieldLabel>
               <Input
                 id="register-email"
                 type="email"
                 autoComplete="email"
-                aria-invalid={Boolean(fieldErrors.email)}
+                aria-invalid={Boolean(errors.email)}
                 aria-describedby={
-                  fieldErrors.email ? 'register-email-error' : undefined
+                  errors.email ? 'register-email-error' : undefined
                 }
                 value={form.email}
                 onChange={(event) => updateField('email', event.target.value)}
+                onBlur={() => markTouched('email')}
               />
-              <FieldError id="register-email-error">
-                {fieldErrors.email}
-              </FieldError>
+              <FieldError id="register-email-error">{errors.email}</FieldError>
             </Field>
-            <Field data-invalid={Boolean(passwordError)}>
+            <Field data-invalid={Boolean(errors.password)}>
               <FieldLabel htmlFor="register-password">Password</FieldLabel>
               <Input
                 id="register-password"
                 type="password"
                 autoComplete="new-password"
-                aria-invalid={Boolean(passwordError)}
+                aria-invalid={Boolean(errors.password)}
                 aria-describedby={
-                  passwordError ? 'register-password-error' : undefined
+                  errors.password ? 'register-password-error' : undefined
                 }
                 value={form.password}
                 onChange={(event) =>
                   updateField('password', event.target.value)
                 }
+                onBlur={() => markTouched('password')}
               />
               <FieldError id="register-password-error">
-                {passwordError}
+                {errors.password}
               </FieldError>
             </Field>
-            <Field data-invalid={Boolean(confirmPasswordError)}>
+            <Field data-invalid={Boolean(errors.confirmPassword)}>
               <FieldLabel htmlFor="register-confirm-password">
                 Confirm password
               </FieldLabel>
@@ -216,9 +222,9 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
                 id="register-confirm-password"
                 type="password"
                 autoComplete="new-password"
-                aria-invalid={Boolean(confirmPasswordError)}
+                aria-invalid={Boolean(errors.confirmPassword)}
                 aria-describedby={
-                  confirmPasswordError
+                  errors.confirmPassword
                     ? 'register-confirm-password-error'
                     : undefined
                 }
@@ -226,29 +232,31 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
                 onChange={(event) =>
                   updateField('confirmPassword', event.target.value)
                 }
+                onBlur={() => markTouched('confirmPassword')}
               />
               <FieldError id="register-confirm-password-error">
-                {confirmPasswordError}
+                {errors.confirmPassword}
               </FieldError>
             </Field>
-            <Field data-invalid={Boolean(fieldErrors.inviteCode)}>
+            <Field data-invalid={Boolean(errors.inviteCode)}>
               <FieldLabel htmlFor="invite-code">Invite code</FieldLabel>
               <Input
                 id="invite-code"
                 autoComplete="off"
                 spellCheck={false}
                 className="font-mono"
-                aria-invalid={Boolean(fieldErrors.inviteCode)}
+                aria-invalid={Boolean(errors.inviteCode)}
                 aria-describedby={
-                  fieldErrors.inviteCode ? 'invite-code-error' : undefined
+                  errors.inviteCode ? 'invite-code-error' : undefined
                 }
                 value={form.inviteCode}
                 onChange={(event) =>
                   updateField('inviteCode', event.target.value)
                 }
+                onBlur={() => markTouched('inviteCode')}
               />
               <FieldError id="invite-code-error">
-                {fieldErrors.inviteCode}
+                {errors.inviteCode}
               </FieldError>
             </Field>
           </FieldGroup>
@@ -257,7 +265,11 @@ export const Register = ({ onBackToLogin }: RegisterProps) => {
             <FieldError className="mt-4">{formError}</FieldError>
           ) : null}
 
-          <Button type="submit" className="mt-6 w-full" disabled={!canSubmit}>
+          <Button
+            type="submit"
+            className="mt-6 w-full"
+            aria-disabled={register.isPending}
+          >
             {register.isPending ? 'Creating account…' : 'Create account'}
           </Button>
         </form>

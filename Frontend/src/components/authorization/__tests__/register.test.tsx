@@ -162,4 +162,95 @@ describe('Register', () => {
       inviteCode: 'abc',
     });
   });
+
+  it('keeps the submit button enabled on an empty form', () => {
+    renderRegister();
+
+    const button = screen.getByRole('button', { name: 'Create account' });
+
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('shows every field error at once when submitting an empty form', async () => {
+    renderRegister();
+    submit();
+
+    expect(await screen.findByText('Enter a display name.')).toBeTruthy();
+    expect(screen.getByText('Enter your email.')).toBeTruthy();
+    expect(screen.getByText('Enter a password.')).toBeTruthy();
+    expect(screen.getByText('Re-enter your password.')).toBeTruthy();
+    expect(screen.getByText('Enter your invite code.')).toBeTruthy();
+    expect(registerMock).not.toHaveBeenCalled();
+  });
+
+  it('does not complain about the email format while the user is typing', () => {
+    renderRegister();
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'not-an-email' },
+    });
+
+    expect(screen.queryByText('Enter a valid email address.')).toBeNull();
+  });
+
+  it('shows the email error on blur and clears it once fixed', () => {
+    renderRegister();
+
+    const email = screen.getByLabelText('Email');
+
+    fireEvent.change(email, { target: { value: 'not-an-email' } });
+    fireEvent.blur(email);
+
+    expect(screen.getByText('Enter a valid email address.')).toBeTruthy();
+
+    fireEvent.change(email, { target: { value: 'test@example.com' } });
+
+    expect(screen.queryByText('Enter a valid email address.')).toBeNull();
+  });
+
+  it('shows the error again when a touched field is emptied while focused', () => {
+    renderRegister();
+
+    const email = screen.getByLabelText('Email');
+
+    fireEvent.change(email, { target: { value: 'test@example.com' } });
+    fireEvent.blur(email);
+    email.focus();
+
+    expect(screen.queryByText('Enter your email.')).toBeNull();
+
+    fireEvent.change(email, { target: { value: '' } });
+
+    expect(screen.getByText('Enter your email.')).toBeTruthy();
+  });
+
+  it('clears a server error when the field is edited', async () => {
+    registerMock.mockRejectedValueOnce(
+      new AuthApiError({
+        status: 409,
+        code: 'email_exists',
+        message: 'An account with that email already exists.',
+        fieldErrors: {
+          email: 'An account with that email already exists.',
+        },
+      }),
+    );
+
+    renderRegister();
+    fillValidForm();
+    submit();
+
+    expect(
+      await screen.findByText('An account with that email already exists.'),
+    ).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'other@example.com' },
+    });
+
+    expect(
+      screen.queryByText('An account with that email already exists.'),
+    ).toBeNull();
+  });
 });
