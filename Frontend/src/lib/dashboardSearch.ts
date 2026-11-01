@@ -6,7 +6,7 @@ export type DashboardPanel =
   | { kind: 'none' }
   | { kind: 'new-brew' }
   | { kind: 'edit-brew'; brewId: number }
-  | { kind: 'new-bag' }
+  | { kind: 'new-bag'; returnTo?: 'new-brew' }
   | { kind: 'edit-bag'; coffeeBagId: number };
 
 const dashboardBoolean = z
@@ -18,6 +18,7 @@ const dashboardSearchSchema = z.object({
   view: z.enum(['brews', 'bags']).optional().catch(undefined),
   showEmpty: dashboardBoolean,
   new: z.enum(['brew', 'bag']).optional().catch(undefined),
+  returnTo: z.enum(['new-brew']).optional().catch(undefined),
   brew: z.coerce.number().int().positive().optional().catch(undefined),
   bag: z.coerce.number().int().positive().optional().catch(undefined),
 });
@@ -53,7 +54,9 @@ export function getDashboardPanel(search: DashboardSearch): DashboardPanel {
   }
 
   if (search.new === 'bag') {
-    return { kind: 'new-bag' };
+    return search.returnTo === 'new-brew'
+      ? { kind: 'new-bag', returnTo: 'new-brew' }
+      : { kind: 'new-bag' };
   }
 
   return { kind: 'none' };
@@ -68,8 +71,15 @@ export function openNewBrew(search: DashboardSearch): DashboardSearch {
   return { ...listState(search), new: 'brew' };
 }
 
-export function openNewBag(search: DashboardSearch): DashboardSearch {
-  return { ...listState(search), new: 'bag' };
+export function openNewBag(
+  search: DashboardSearch,
+  options: { returnTo?: 'new-brew' } = {},
+): DashboardSearch {
+  return {
+    ...listState(search),
+    new: 'bag',
+    ...(options.returnTo === undefined ? {} : { returnTo: options.returnTo }),
+  };
 }
 
 export function openEditBrew(
@@ -87,6 +97,12 @@ export function openEditBag(
 }
 
 export function closeDashboardPanel(search: DashboardSearch): DashboardSearch {
+  // Reaching the bag form from the brew form means the user is mid-brew.
+  // Both saving and cancelling the bag should return them to that draft.
+  if (search.new === 'bag' && search.returnTo === 'new-brew') {
+    return openNewBrew(search);
+  }
+
   return listState(search);
 }
 

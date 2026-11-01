@@ -14,6 +14,7 @@ interface NewBrewCardProps {
   panel: DashboardPanel;
   onOpenNewBrew: () => void;
   onOpenNewBag: () => void;
+  onAddBagFromBrew: () => void;
   onClose: () => void;
 }
 
@@ -21,6 +22,7 @@ export const NewBrewCard = ({
   panel,
   onOpenNewBrew,
   onOpenNewBag,
+  onAddBagFromBrew,
   onClose,
 }: NewBrewCardProps) => {
   const [scrolled, setScrolled] = useState(false);
@@ -37,32 +39,13 @@ export const NewBrewCard = ({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const panelContent = (() => {
-    switch (panel.kind) {
-      case 'none':
-        return null;
-      case 'new-brew':
-        return <CreateBrew onCancel={onClose} />;
-      case 'edit-brew':
-        return (
-          <EditBrew
-            key={panel.brewId}
-            brewId={panel.brewId}
-            onCancel={onClose}
-          />
-        );
-      case 'new-bag':
-        return <CreateCoffeeBag onCancel={onClose} />;
-      case 'edit-bag':
-        return (
-          <EditCoffeeBag
-            key={panel.coffeeBagId}
-            coffeeBagId={panel.coffeeBagId}
-            onCancel={onClose}
-          />
-        );
-    }
-  })();
+  // Keep the brew form mounted while the bag form is open on top of it, so the
+  // user does not lose their half-finished brew when creating a missing bag.
+  const keepBrewForm =
+    panel.kind === 'new-bag' && panel.returnTo === 'new-brew';
+  const showBrewForm = panel.kind === 'new-brew' || keepBrewForm;
+
+  const panelCard = 'bg-card border rounded-2xl shadow-md px-6 py-6';
 
   return (
     <>
@@ -87,9 +70,32 @@ export const NewBrewCard = ({
           </Card>
         </div>
       )}
-      {panelContent !== null && (
-        <div className="bg-card border rounded-2xl shadow-md px-6 py-6">
-          {panelContent}
+      {showBrewForm && (
+        <div className={keepBrewForm ? 'hidden' : panelCard}>
+          <CreateBrew onCancel={onClose} onCreateBag={onAddBagFromBrew} />
+        </div>
+      )}
+      {panel.kind === 'edit-brew' && (
+        <div className={panelCard}>
+          <EditBrew
+            key={panel.brewId}
+            brewId={panel.brewId}
+            onCancel={onClose}
+          />
+        </div>
+      )}
+      {panel.kind === 'new-bag' && (
+        <div className={panelCard}>
+          <CreateCoffeeBag onCancel={onClose} />
+        </div>
+      )}
+      {panel.kind === 'edit-bag' && (
+        <div className={panelCard}>
+          <EditCoffeeBag
+            key={panel.coffeeBagId}
+            coffeeBagId={panel.coffeeBagId}
+            onCancel={onClose}
+          />
         </div>
       )}
     </>

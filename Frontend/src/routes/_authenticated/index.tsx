@@ -55,6 +55,11 @@ function DashBoard() {
 
   const handleOpenNewBrew = () => updateSearch(openNewBrew, true);
   const handleOpenNewBag = () => updateSearch(openNewBag, true);
+  const handleAddBagFromBrew = () =>
+    updateSearch(
+      (current) => openNewBag(current, { returnTo: 'new-brew' }),
+      true,
+    );
   const handleClosePanel = () => updateSearch(closeDashboardPanel);
 
   const handleEditBrew = (brewId: number) => {
@@ -79,6 +84,7 @@ function DashBoard() {
         panel={panel}
         onOpenNewBrew={handleOpenNewBrew}
         onOpenNewBag={handleOpenNewBag}
+        onAddBagFromBrew={handleAddBagFromBrew}
         onClose={handleClosePanel}
       />
       <ListSection

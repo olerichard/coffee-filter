@@ -1,0 +1,149 @@
+// @vitest-environment jsdom
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { BrewForm } from '../BrewForm';
+import { getDefaultValues } from '../brewFormValues';
+import type { BrewFormValues } from '../brewFormValues';
+import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
+
+const method: BrewMethod = {
+  id: 1,
+  name: 'Espresso',
+  dose: { min: 15, max: 25, default: 18 },
+  grindSize: { min: 1, max: 10, default: 5 },
+  brewTime: { min: 20, max: 40, default: 30 },
+  brewWeight: { min: 20, max: 60, default: 36 },
+};
+
+const bag: CoffeeBag = {
+  id: 7,
+  userId: 1,
+  roaster: 'Tim Wendelboe',
+  origin: 'Kenya',
+  roastStyle: 'Light',
+};
+
+beforeAll(() => {
+  // jsdom has no pointer capture, and Radix Select uses it while opening.
+  Object.defineProperties(Element.prototype, {
+    hasPointerCapture: { value: () => false, configurable: true },
+    setPointerCapture: { value: () => {}, configurable: true },
+    releasePointerCapture: { value: () => {}, configurable: true },
+  });
+  Element.prototype.scrollIntoView = () => {};
+
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+});
+
+interface RenderOptions {
+  coffeeBags?: Array<CoffeeBag>;
+  onCreateBag?: () => void;
+  onDraftChange?: (values: BrewFormValues) => void;
+  onCancel?: () => void;
+}
+
+function renderForm({
+  coffeeBags = [],
+  onCreateBag,
+  onDraftChange,
+  onCancel = vi.fn(),
+}: RenderOptions = {}) {
+  return render(
+    <BrewForm
+      initialValues={getDefaultValues(method)}
+      brewMethods={[method]}
+      coffeeBags={coffeeBags}
+      submitLabel="Save Brew"
+      cancelLabel="Hide"
+      isLoading={false}
+      onSubmit={vi.fn()}
+      onCancel={onCancel}
+      onCreateBag={onCreateBag}
+      onDraftChange={onDraftChange}
+    />,
+  );
+}
+
+function openBagSelect() {
+  const trigger = screen.getByRole('combobox', { name: /Coffee Bag/ });
+
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+}
+
+afterEach(() => {
+  cleanup();
+});
+
+describe('BrewForm coffee bag select', () => {
+  it('offers a way to create a bag when the user has none', () => {
+    const onCreateBag = vi.fn();
+
+    renderForm({ onCreateBag });
+    openBagSelect();
+
+    expect(screen.getByText('No coffee bags with coffee left')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Add a coffee bag…' }));
+
+    expect(onCreateBag).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the empty hint under the field', () => {
+    renderForm();
+
+    expect(
+      screen.getByText('You need a coffee bag before you can save a brew.'),
+    ).toBeTruthy();
+  });
+
+  it('lists the available bags and no create option', () => {
+    renderForm({ coffeeBags: [bag] });
+    openBagSelect();
+
+    expect(
+      screen.queryByRole('option', { name: 'Add a coffee bag…' }),
+    ).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+    );
+
+    expect(
+      screen.getByRole('combobox', { name: /Coffee Bag/ }).textContent,
+    ).toContain('Tim Wendelboe - Kenya');
+  });
+
+  it('does not show the create option when no handler is provided', () => {
+    renderForm();
+    openBagSelect();
+
+    const option = screen.getByRole('option', {
+      name: 'Add a coffee bag…',
+    });
+
+    expect(option.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('reports draft changes as the user edits', () => {
+    const onDraftChange = vi.fn();
+
+    renderForm({ onDraftChange });
+
+    fireEvent.change(screen.getByLabelText('Notes'), {
+      target: { value: 'Tasting good' },
+    });
+
+    expect(onDraftChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ notes: 'Tasting good' }),
+    );
+  });
+});

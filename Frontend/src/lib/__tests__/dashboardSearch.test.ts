@@ -153,3 +153,74 @@ describe('dashboard search helpers', () => {
     });
   });
 });
+
+describe('bag return target', () => {
+  it('resolves the bag panel with its return target', () => {
+    expect(
+      getDashboardPanel(
+        validateDashboardSearch({ new: 'bag', returnTo: 'new-brew' }),
+      ),
+    ).toEqual({ kind: 'new-bag', returnTo: 'new-brew' });
+
+    expect(getDashboardPanel(validateDashboardSearch({ new: 'bag' }))).toEqual({
+      kind: 'new-bag',
+    });
+  });
+
+  it('ignores return targets that point at another panel type', () => {
+    const search = validateDashboardSearch({
+      new: 'bag',
+      returnTo: 'edit-bag',
+    });
+
+    expect(search.returnTo).toBeUndefined();
+    expect(getDashboardPanel(search)).toEqual({ kind: 'new-bag' });
+  });
+
+  it('records that the bag form was opened from the brew form', () => {
+    const current = validateDashboardSearch({
+      view: 'bags',
+      showEmpty: 'true',
+      new: 'brew',
+    });
+
+    expect(openNewBag(current, { returnTo: 'new-brew' })).toEqual({
+      view: 'bags',
+      showEmpty: true,
+      new: 'bag',
+      returnTo: 'new-brew',
+    });
+  });
+
+  it('returns to the brew form when the bag form closes', () => {
+    const current = validateDashboardSearch({
+      view: 'bags',
+      showEmpty: 'true',
+      new: 'bag',
+      returnTo: 'new-brew',
+    });
+
+    expect(closeDashboardPanel(current)).toEqual({
+      view: 'bags',
+      showEmpty: true,
+      new: 'brew',
+    });
+  });
+
+  it('closes the bag form normally without a return target', () => {
+    const current = validateDashboardSearch({ new: 'bag', view: 'bags' });
+
+    expect(closeDashboardPanel(current)).toEqual({ view: 'bags' });
+  });
+
+  it('drops the return target when another panel opens', () => {
+    const current = validateDashboardSearch({
+      new: 'bag',
+      returnTo: 'new-brew',
+    });
+
+    expect(openNewBrew(current)).toEqual({ new: 'brew' });
+    expect(openEditBrew(current, 42)).toEqual({ brew: 42 });
+    expect(openEditBag(current, 7)).toEqual({ bag: 7 });
+  });
+});

@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -22,6 +24,10 @@ import { cn } from '@/lib/utils';
 const NO_MAX = 999;
 const DELETE_CONFIRM_TIMEOUT_MS = 5000;
 
+// Radix needs every item to have a value. This sentinel never reaches the form
+// state: it is intercepted and turned into a request to create a coffee bag.
+const CREATE_BAG_OPTION = '__create-bag__';
+
 interface BrewFormProps {
   initialValues: BrewFormValues;
   brewMethods: Array<BrewMethod>;
@@ -31,7 +37,10 @@ interface BrewFormProps {
   isLoading: boolean;
   onSubmit: (values: BrewFormValues) => Promise<unknown> | void;
   onCancel: () => void;
+  onCreateBag?: () => void;
   onDelete?: () => void;
+  onDraftChange?: (values: BrewFormValues) => void;
+  onDraftReset?: () => void;
   isDeleting?: boolean;
   resetOnSuccess?: boolean;
   submitRef?: Ref<HTMLButtonElement>;
@@ -46,7 +55,10 @@ export function BrewForm({
   isLoading,
   onSubmit,
   onCancel,
+  onCreateBag,
   onDelete,
+  onDraftChange,
+  onDraftReset,
   isDeleting = false,
   resetOnSuccess = false,
   submitRef,
@@ -60,10 +72,18 @@ export function BrewForm({
       onChange: BrewFormSchema,
       onSubmit: BrewFormSchema,
     },
+    listeners: {
+      onChange: ({ formApi }) => {
+        onDraftChange?.(formApi.state.values);
+      },
+    },
     onSubmit: async ({ value }) => {
       await onSubmit(value);
       if (resetOnSuccess) {
         form.reset();
+        // The reset above writes the default values through the change
+        // listener, so clear the saved draft only after it has run.
+        onDraftReset?.();
       }
     },
   });
@@ -156,40 +176,69 @@ export function BrewForm({
 
         <form.Field name="coffeeBagId">
           {(field) => {
+            const hasBags = coffeeBags.length > 0;
             const isBagAvailable = coffeeBags.some(
               (bag) => bag.id === field.state.value,
             );
+            const error =
+              field.state.meta.errors.length > 0 && field.state.meta.isTouched
+                ? field.state.meta.errors[0]?.message
+                : undefined;
 
             return (
               <Field>
                 <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
                 <Select
                   value={isBagAvailable ? field.state.value.toString() : ''}
-                  onValueChange={(value) => field.handleChange(parseInt(value))}
+                  onValueChange={(value) => {
+                    if (value === CREATE_BAG_OPTION) {
+                      onCreateBag?.();
+                      return;
+                    }
+
+                    field.handleChange(Number(value));
+                  }}
                 >
                   <SelectTrigger
-                    aria-invalid={
-                      field.state.meta.errors.length > 0 &&
-                      field.state.meta.isTouched
-                    }
+                    aria-invalid={error !== undefined}
                     id="coffeeBagId"
                   >
-                    <SelectValue placeholder="Select a coffee bag" />
+                    <SelectValue
+                      placeholder={
+                        hasBags ? 'Select a coffee bag' : 'No coffee bags yet'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {coffeeBags.map((bag) => (
-                      <SelectItem key={bag.id} value={bag.id.toString()}>
-                        {bag.roaster} - {bag.origin}
-                      </SelectItem>
-                    ))}
+                    {hasBags ? (
+                      coffeeBags.map((bag) => (
+                        <SelectItem key={bag.id} value={bag.id.toString()}>
+                          {bag.roaster} - {bag.origin}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectGroup>
+                        <SelectLabel>
+                          No coffee bags with coffee left
+                        </SelectLabel>
+                        <SelectItem
+                          value={CREATE_BAG_OPTION}
+                          disabled={onCreateBag === undefined}
+                        >
+                          Add a coffee bag…
+                        </SelectItem>
+                      </SelectGroup>
+                    )}
                   </SelectContent>
                 </Select>
-                {field.state.meta.errors.length > 0 &&
-                  field.state.meta.isTouched && (
-                    <FieldDescription>
-                      {field.state.meta.errors[0]?.message}
-                    </FieldDescription>
-                  )}
+                {error !== undefined ? (
+                  <FieldDescription>{error}</FieldDescription>
+                ) : null}
+                {!hasBags ? (
+                  <FieldDescription>
+                    You need a coffee bag before you can save a brew.
+                  </FieldDescription>
+                ) : null}
               </Field>
             );
           }}

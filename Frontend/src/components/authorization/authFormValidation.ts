@@ -15,8 +15,15 @@ export const REGISTER_FIELDS = [
 ] as const satisfies ReadonlyArray<AuthField>;
 
 const emailSchema = z
-  .email('Enter a valid email address.')
-  .max(254, 'Use 254 characters or fewer.');
+  .string()
+  .trim()
+  .min(1, 'Enter your email.')
+  .pipe(
+    z.email('Enter a valid email address.').max(
+      254,
+      'Use 254 characters or fewer.',
+    ),
+  );
 
 export const loginFormSchema = z.object({
   email: emailSchema,
