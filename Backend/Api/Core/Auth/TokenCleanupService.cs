@@ -3,16 +3,16 @@ namespace Api.Core.Auth
   using Api.Database;
   using Microsoft.EntityFrameworkCore;
 
-  public sealed class RefreshTokenCleanupService : BackgroundService
+  public sealed class TokenCleanupService : BackgroundService
   {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger<RefreshTokenCleanupService> _logger;
+    private readonly ILogger<TokenCleanupService> _logger;
 
-    public RefreshTokenCleanupService(
+    public TokenCleanupService(
       IServiceScopeFactory scopeFactory,
       TimeProvider timeProvider,
-      ILogger<RefreshTokenCleanupService> logger)
+      ILogger<TokenCleanupService> logger)
     {
       _scopeFactory = scopeFactory;
       _timeProvider = timeProvider;
@@ -57,6 +57,17 @@ namespace Api.Core.Auth
             "Deleted {Count} expired refresh tokens.",
             deleted);
         }
+
+        var deletedResetTokens = await dbContext.PasswordResetTokens
+          .Where(token => token.ExpiresAt < now)
+          .ExecuteDeleteAsync(cancellationToken);
+
+        if (deletedResetTokens > 0)
+        {
+          _logger.LogInformation(
+            "Deleted {Count} expired password reset tokens.",
+            deletedResetTokens);
+        }
       }
       catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
       {
@@ -64,7 +75,7 @@ namespace Api.Core.Auth
       }
       catch (Exception exception)
       {
-        _logger.LogError(exception, "Refresh token cleanup failed.");
+        _logger.LogError(exception, "Token cleanup failed.");
       }
     }
   }

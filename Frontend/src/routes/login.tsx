@@ -34,6 +34,9 @@ function LoginPage() {
         onCreateAccount={() => {
           void navigate({ to: '/createaccount' });
         }}
+        onForgotPassword={() => {
+          void navigate({ to: '/forgot-password' });
+        }}
       />
     </AuthPage>
   );

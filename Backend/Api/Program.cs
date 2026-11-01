@@ -1,5 +1,6 @@
 using Api.Core;
 using Api.Core.Auth;
+using Api.Core.Email;
 using Api.Database;
 using Api.Database.Entities;
 using FluentValidation;
@@ -15,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -63,6 +65,33 @@ builder.Services.Configure<CorsSettings>(
 
 builder.Services.Configure<SignupSettings>(
     builder.Configuration.GetSection(SignupSettings.SectionName));
+
+builder.Services.AddOptions<PasswordResetSettings>()
+    .Bind(builder.Configuration.GetSection(PasswordResetSettings.SectionName))
+    .Validate(
+        settings => settings.TokenMinutes > 0,
+        "PasswordReset:TokenMinutes must be positive.")
+    .Validate(
+        settings => Uri.TryCreate(settings.FrontendBaseUrl, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps),
+        "PasswordReset:FrontendBaseUrl must be an absolute http(s) URL.")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<EmailSettings>()
+    .Bind(builder.Configuration.GetSection(EmailSettings.SectionName))
+    .Validate(
+        settings => settings.Smtp.Port > 0,
+        "Email:Smtp:Port must be positive.")
+    .Validate(
+        settings => string.IsNullOrWhiteSpace(settings.Smtp.Host)
+            || settings.Smtp.Security.Trim().ToLowerInvariant() is
+                "starttls" or "ssl" or "ssl-on-connect" or "none",
+        "Email:Smtp:Security must be one of: starttls, ssl, none.")
+    .Validate(
+        settings => string.IsNullOrWhiteSpace(settings.Smtp.Host)
+            || MailAddress.TryCreate(settings.Smtp.FromAddress, out _),
+        "Email:Smtp:FromAddress must be a valid email address when Email:Smtp:Host is configured.")
+    .ValidateOnStart();
 
 var corsSettings = builder.Configuration
     .GetSection(CorsSettings.SectionName)
@@ -192,8 +221,36 @@ builder.Services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntit
 builder.Services.AddSingleton<DummyPasswordHash>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddSingleton<RefreshTokenCookieService>();
-builder.Services.AddHostedService<RefreshTokenCleanupService>();
+builder.Services.AddHostedService<TokenCleanupService>();
+
+builder.Services.AddSingleton<EmailQueue>();
+builder.Services.AddSingleton<IEmailQueue>(serviceProvider =>
+    serviceProvider.GetRequiredService<EmailQueue>());
+builder.Services.AddHostedService<EmailDispatcher>();
+
+builder.Services.AddSingleton<IEmailSender>(serviceProvider =>
+{
+    var emailSettings = serviceProvider
+        .GetRequiredService<IOptions<EmailSettings>>()
+        .Value;
+    var environment = serviceProvider.GetRequiredService<IHostEnvironment>();
+
+    if (string.IsNullOrWhiteSpace(emailSettings.Smtp.Host))
+    {
+        if (!environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "Email:Smtp:Host is required outside Development, otherwise password reset emails cannot be delivered.");
+        }
+
+        return ActivatorUtilities.CreateInstance<LoggingEmailSender>(serviceProvider);
+    }
+
+    return ActivatorUtilities.CreateInstance<SmtpEmailSender>(serviceProvider);
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
@@ -237,6 +294,26 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.PasswordResetRequest, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy(RateLimitPolicies.PasswordResetSubmit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
                 Window = TimeSpan.FromMinutes(15),
                 QueueLimit = 0
             }));

@@ -12,14 +12,18 @@ vi.mock('@/components/context/authentication/AuthenticationContext', () => ({
   useAuth: () => ({ login: loginMock }),
 }));
 
-function renderLogin() {
+function renderLogin(onForgotPassword?: () => void) {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <Login signupEnabled onCreateAccount={vi.fn()} />
+      <Login
+        signupEnabled
+        onCreateAccount={vi.fn()}
+        onForgotPassword={onForgotPassword}
+      />
     </QueryClientProvider>,
   );
 }
@@ -127,5 +131,23 @@ describe('Login', () => {
     });
 
     expect(screen.queryByText('Invalid email or password.')).toBeNull();
+  });
+
+  it('opens the forgot-password flow from the forgot password button', () => {
+    const onForgotPassword = vi.fn();
+
+    renderLogin(onForgotPassword);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }));
+
+    expect(onForgotPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the forgot password button when no handler is provided', () => {
+    renderLogin();
+
+    expect(
+      screen.queryByRole('button', { name: 'Forgot password?' }),
+    ).toBeNull();
   });
 });

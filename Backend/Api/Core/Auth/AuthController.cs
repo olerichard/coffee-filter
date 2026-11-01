@@ -1,5 +1,6 @@
 namespace Api.Core.Auth
 {
+  using Api.Core.Email;
   using Api.Core.Users;
   using Api.Database;
   using Api.Database.Entities;
@@ -11,6 +12,7 @@ namespace Api.Core.Auth
   using Microsoft.AspNetCore.RateLimiting;
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Options;
+  using System.Net;
   using System.Security.Cryptography;
   using System.Text;
 
@@ -32,6 +34,9 @@ namespace Api.Core.Auth
     private readonly LockoutSettings _lockoutSettings;
     private readonly CorsSettings _corsSettings;
     private readonly SignupSettings _signupSettings;
+    private readonly PasswordResetSettings _passwordResetSettings;
+    private readonly IPasswordResetService _passwordResetService;
+    private readonly IEmailQueue _emailQueue;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<AuthController> _logger;
 
@@ -46,6 +51,9 @@ namespace Api.Core.Auth
       IOptions<LockoutSettings> lockoutSettings,
       IOptions<CorsSettings> corsSettings,
       IOptions<SignupSettings> signupSettings,
+      IOptions<PasswordResetSettings> passwordResetSettings,
+      IPasswordResetService passwordResetService,
+      IEmailQueue emailQueue,
       TimeProvider timeProvider,
       ILogger<AuthController> logger)
     {
@@ -59,6 +67,9 @@ namespace Api.Core.Auth
       _lockoutSettings = lockoutSettings.Value;
       _corsSettings = corsSettings.Value;
       _signupSettings = signupSettings.Value;
+      _passwordResetSettings = passwordResetSettings.Value;
+      _passwordResetService = passwordResetService;
+      _emailQueue = emailQueue;
       _timeProvider = timeProvider;
       _logger = logger;
     }
@@ -475,6 +486,86 @@ namespace Api.Core.Auth
       });
     }
 
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.PasswordResetRequest)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ForgotPassword(
+      [FromBody] ForgotPasswordRequest request,
+      [FromServices] ForgotPasswordRequestValidator validator,
+      CancellationToken cancellationToken)
+    {
+      if (!IsAllowedOrigin())
+      {
+        return StatusCode(StatusCodes.Status403Forbidden);
+      }
+
+      var validationResult = await validator.ValidateAsync(request, cancellationToken);
+      if (!validationResult.IsValid)
+      {
+        return ValidationProblemFrom(validationResult);
+      }
+
+      var reset = await _passwordResetService.CreateAsync(
+        NormalizeEmail(request.Email),
+        GetIpAddress(),
+        cancellationToken);
+
+      if (reset is not null)
+      {
+        _emailQueue.Enqueue(BuildPasswordResetEmail(reset));
+
+        _logger.LogInformation(
+          "Password reset email queued for user {UserId}.",
+          reset.User.Id);
+      }
+
+      // Always the same answer, so this endpoint cannot be used to discover
+      // which email addresses have an account.
+      return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.PasswordResetSubmit)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword(
+      [FromBody] ResetPasswordRequest request,
+      [FromServices] ResetPasswordRequestValidator validator,
+      CancellationToken cancellationToken)
+    {
+      if (!IsAllowedOrigin())
+      {
+        return StatusCode(StatusCodes.Status403Forbidden);
+      }
+
+      var validationResult = await validator.ValidateAsync(request, cancellationToken);
+      if (!validationResult.IsValid)
+      {
+        return ValidationProblemFrom(validationResult);
+      }
+
+      var reset = await _passwordResetService.ResetAsync(
+        request.Token,
+        request.NewPassword,
+        cancellationToken);
+
+      if (!reset)
+      {
+        return BadRequest(new
+        {
+          code = "reset_token_invalid",
+          message = "This reset link is no longer valid. Request a new one."
+        });
+      }
+
+      _refreshTokenCookieService.Delete(Response);
+
+      return NoContent();
+    }
+
     [HttpGet("signup-status")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(SignupStatusResponse), StatusCodes.Status200OK)]
@@ -500,6 +591,43 @@ namespace Api.Core.Auth
 
     private static string NormalizeEmail(string email) =>
       email.Trim().ToLowerInvariant();
+
+    private EmailMessage BuildPasswordResetEmail(PasswordResetRequest reset)
+    {
+      var baseUrl = _passwordResetSettings.FrontendBaseUrl.TrimEnd('/');
+      var resetUrl = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(reset.RawToken)}";
+      var minutes = _passwordResetSettings.TokenMinutes;
+      var name = string.IsNullOrWhiteSpace(reset.User.DisplayName)
+        ? "there"
+        : reset.User.DisplayName;
+
+      var textBody =
+        $"""
+        Hi {name},
+
+        Someone asked to reset the password for your Coffee Filter account.
+
+        Open this link to choose a new password. It is valid for {minutes} minutes:
+        {resetUrl}
+
+        If you did not request this, you can ignore this email. Your password will not change.
+        """;
+
+      var htmlBody =
+        $"""
+        <p>Hi {WebUtility.HtmlEncode(name)},</p>
+        <p>Someone asked to reset the password for your Coffee Filter account.</p>
+        <p><a href="{WebUtility.HtmlEncode(resetUrl)}">Choose a new password</a></p>
+        <p>This link is valid for {minutes} minutes. If you did not request this, you can ignore this email and your password will not change.</p>
+        """;
+
+      return new EmailMessage(
+        reset.User.Email,
+        reset.User.DisplayName,
+        "Reset your Coffee Filter password",
+        textBody,
+        htmlBody);
+    }
 
     private static bool InviteCodeMatches(string provided, string expected)
     {

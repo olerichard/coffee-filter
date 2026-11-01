@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  forgotPasswordFormSchema,
   loginFormSchema,
   registerFormSchema,
+  resetPasswordFormSchema,
   toFieldErrors,
   visibleFieldErrors,
 } from '../authFormValidation';
@@ -254,5 +256,111 @@ describe('visibleFieldErrors', () => {
 
   it('omits fields that are touched and valid', () => {
     expect(visibleFieldErrors(['email'], { email: true }, {}, {})).toEqual({});
+  });
+});
+
+describe('forgotPasswordFormSchema', () => {
+  it('requires an email address', () => {
+    const result = forgotPasswordFormSchema.safeParse({ email: '  ' });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(toFieldErrors(result.error).email).toBe('Enter your email.');
+    }
+  });
+
+  it('trims the email and returns the trimmed value', () => {
+    const result = forgotPasswordFormSchema.safeParse({
+      email: '  test@example.com  ',
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.email).toBe('test@example.com');
+    }
+  });
+
+  it('rejects an address without an @', () => {
+    const result = forgotPasswordFormSchema.safeParse({
+      email: 'not-an-email',
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(toFieldErrors(result.error).email).toBe(
+        'Enter a valid email address.',
+      );
+    }
+  });
+});
+
+describe('resetPasswordFormSchema', () => {
+  const validReset = {
+    newPassword: 'a-long-password',
+    confirmPassword: 'a-long-password',
+  };
+
+  it('requires both passwords', () => {
+    const result = resetPasswordFormSchema.safeParse({
+      newPassword: '',
+      confirmPassword: '',
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(toFieldErrors(result.error)).toEqual({
+        newPassword: 'Enter a new password.',
+        confirmPassword: 'Re-enter your new password.',
+      });
+    }
+  });
+
+  it('requires at least 12 characters', () => {
+    const result = resetPasswordFormSchema.safeParse({
+      newPassword: 'a'.repeat(11),
+      confirmPassword: 'a'.repeat(11),
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(toFieldErrors(result.error).newPassword).toBe(
+        'Use at least 12 characters.',
+      );
+    }
+  });
+
+  it('accepts exactly 12 characters', () => {
+    const password = 'a'.repeat(12);
+
+    expect(
+      resetPasswordFormSchema.safeParse({
+        newPassword: password,
+        confirmPassword: password,
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects mismatched passwords on the confirmation field', () => {
+    const result = resetPasswordFormSchema.safeParse({
+      ...validReset,
+      confirmPassword: 'something-else',
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(toFieldErrors(result.error).confirmPassword).toBe(
+        'The passwords do not match.',
+      );
+    }
+  });
+
+  it('accepts a valid pair', () => {
+    expect(resetPasswordFormSchema.safeParse(validReset).success).toBe(true);
   });
 });

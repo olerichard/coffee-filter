@@ -51,6 +51,36 @@ export const registerFormSchema = z
 export type LoginForm = z.infer<typeof loginFormSchema>;
 export type RegisterForm = z.infer<typeof registerFormSchema>;
 
+export const FORGOT_PASSWORD_FIELDS = [
+  'email',
+] as const satisfies ReadonlyArray<AuthField>;
+
+export const forgotPasswordFormSchema = z.object({
+  email: emailSchema,
+});
+
+export const RESET_PASSWORD_FIELDS = [
+  'newPassword',
+  'confirmPassword',
+] as const satisfies ReadonlyArray<AuthField>;
+
+export const resetPasswordFormSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(1, 'Enter a new password.')
+      .min(12, 'Use at least 12 characters.')
+      .max(128, 'Use 128 characters or fewer.'),
+    confirmPassword: z.string().min(1, 'Re-enter your new password.'),
+  })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    message: 'The passwords do not match.',
+    path: ['confirmPassword'],
+  });
+
+export type ForgotPasswordForm = z.infer<typeof forgotPasswordFormSchema>;
+export type ResetPasswordForm = z.infer<typeof resetPasswordFormSchema>;
+
 export type FieldErrors = Partial<Record<AuthField, string>>;
 
 /** Keeps only the first issue per field so each input shows one message. */

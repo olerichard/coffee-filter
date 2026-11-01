@@ -28,6 +28,7 @@ import {
 interface LoginProps {
   signupEnabled?: boolean;
   onCreateAccount?: () => void;
+  onForgotPassword?: () => void;
 }
 
 const emptyForm: LoginForm = {
@@ -40,7 +41,11 @@ const allTouched: Partial<Record<AuthField, boolean>> = {
   password: true,
 };
 
-export const Login = ({ signupEnabled, onCreateAccount }: LoginProps) => {
+export const Login = ({
+  signupEnabled,
+  onCreateAccount,
+  onForgotPassword,
+}: LoginProps) => {
   const [form, setForm] = useState<LoginForm>(emptyForm);
   const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>(
     {},
@@ -149,6 +154,20 @@ export const Login = ({ signupEnabled, onCreateAccount }: LoginProps) => {
             {login.isPending ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>
+
+        {onForgotPassword ? (
+          <div className="mt-2 flex justify-end">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="px-0"
+              onClick={onForgotPassword}
+            >
+              Forgot password?
+            </Button>
+          </div>
+        ) : null}
 
         {signupEnabled && onCreateAccount ? (
           <Button

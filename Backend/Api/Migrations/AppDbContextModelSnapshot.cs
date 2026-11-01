@@ -231,6 +231,44 @@ namespace Api.Migrations
                     b.ToTable("GrinderModels");
                 });
 
+            modelBuilder.Entity("Api.Database.Entities.PasswordResetTokenEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(45)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExpiresAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetTokens");
+                });
+
             modelBuilder.Entity("Api.Database.Entities.RefreshTokenEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -403,6 +441,17 @@ namespace Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Api.Database.Entities.PasswordResetTokenEntity", b =>
+                {
+                    b.HasOne("Api.Database.Entities.UserEntity", "User")
+                        .WithMany("PasswordResetTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Api.Database.Entities.RefreshTokenEntity", b =>
                 {
                     b.HasOne("Api.Database.Entities.UserEntity", "User")
@@ -448,6 +497,8 @@ namespace Api.Migrations
                     b.Navigation("Brews");
 
                     b.Navigation("CoffeeBags");
+
+                    b.Navigation("PasswordResetTokens");
 
                     b.Navigation("RefreshTokens");
 

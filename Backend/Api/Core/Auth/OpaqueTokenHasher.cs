@@ -4,7 +4,7 @@ namespace Api.Core.Auth
   using System.Security.Cryptography;
   using System.Text;
 
-  public static class RefreshTokenHasher
+  public static class OpaqueTokenHasher
   {
     public static string Generate()
     {

@@ -55,12 +55,12 @@ namespace Api.Core.Auth
     {
       var now = _timeProvider.GetUtcNow().UtcDateTime;
       var expiresAt = now.AddDays(_settings.RefreshTokenDays);
-      var rawToken = RefreshTokenHasher.Generate();
+      var rawToken = OpaqueTokenHasher.Generate();
 
       _dbContext.RefreshTokens.Add(new RefreshTokenEntity
       {
         UserId = user.Id,
-        TokenHash = RefreshTokenHasher.Hash(rawToken),
+        TokenHash = OpaqueTokenHasher.Hash(rawToken),
         ExpiresAt = expiresAt,
         CreatedAt = now,
         CreatedByIp = Truncate(ipAddress, 45),
@@ -79,7 +79,7 @@ namespace Api.Core.Auth
       CancellationToken cancellationToken)
     {
       var now = _timeProvider.GetUtcNow().UtcDateTime;
-      var hash = RefreshTokenHasher.Hash(rawToken);
+      var hash = OpaqueTokenHasher.Hash(rawToken);
 
       await using var transaction = await _dbContext.Database
         .BeginTransactionAsync(cancellationToken);
@@ -119,13 +119,13 @@ namespace Api.Core.Auth
         return null;
       }
 
-      var rawNewToken = RefreshTokenHasher.Generate();
+      var rawNewToken = OpaqueTokenHasher.Generate();
       var newExpiresAt = now.AddDays(_settings.RefreshTokenDays);
 
       _dbContext.RefreshTokens.Add(new RefreshTokenEntity
       {
         UserId = token.UserId,
-        TokenHash = RefreshTokenHasher.Hash(rawNewToken),
+        TokenHash = OpaqueTokenHasher.Hash(rawNewToken),
         ExpiresAt = newExpiresAt,
         CreatedAt = now,
         CreatedByIp = Truncate(ipAddress, 45),
@@ -147,7 +147,7 @@ namespace Api.Core.Auth
         return;
       }
 
-      await DeleteByHashAsync(RefreshTokenHasher.Hash(rawToken), cancellationToken);
+      await DeleteByHashAsync(OpaqueTokenHasher.Hash(rawToken), cancellationToken);
     }
 
     public async Task RevokeAllForUserAsync(

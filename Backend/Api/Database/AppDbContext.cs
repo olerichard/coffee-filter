@@ -44,6 +44,7 @@ namespace Api.Database
     public DbSet<GrinderModelEntity> GrinderModels { get; set; } = null!;
     public DbSet<UserEquipmentEntity> UserEquipment { get; set; } = null!;
     public DbSet<RefreshTokenEntity> RefreshTokens { get; set; } = null!;
+    public DbSet<PasswordResetTokenEntity> PasswordResetTokens { get; set; } = null!;
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -142,6 +143,27 @@ namespace Api.Database
 
         entity.HasOne(t => t.User)
           .WithMany(u => u.RefreshTokens)
+          .HasForeignKey(t => t.UserId)
+          .OnDelete(DeleteBehavior.Cascade);
+      });
+
+      modelBuilder.Entity<PasswordResetTokenEntity>(entity =>
+      {
+        entity.Property(t => t.TokenHash)
+          .HasMaxLength(64)
+          .IsRequired();
+
+        entity.Property(t => t.CreatedByIp)
+          .HasMaxLength(45);
+
+        entity.HasIndex(t => t.TokenHash)
+          .IsUnique();
+
+        entity.HasIndex(t => t.UserId);
+        entity.HasIndex(t => t.ExpiresAt);
+
+        entity.HasOne(t => t.User)
+          .WithMany(u => u.PasswordResetTokens)
           .HasForeignKey(t => t.UserId)
           .OnDelete(DeleteBehavior.Cascade);
       });

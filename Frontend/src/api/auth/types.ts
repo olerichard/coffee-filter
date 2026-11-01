@@ -22,4 +22,9 @@ export interface ChangePasswordRequest {
 }
 
 export type AuthField =
-  'displayName' | 'email' | 'password' | 'confirmPassword' | 'inviteCode';
+  | 'displayName'
+  | 'email'
+  | 'password'
+  | 'confirmPassword'
+  | 'newPassword'
+  | 'inviteCode';

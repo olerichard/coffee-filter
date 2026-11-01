@@ -61,6 +61,43 @@ namespace Api.Core.Auth
     public bool Enabled { get; set; }
   }
 
+  public class ForgotPasswordRequest
+  {
+    public required string Email { get; set; }
+  }
+
+  public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+  {
+    public ForgotPasswordRequestValidator()
+    {
+      RuleFor(x => x.Email)
+        .NotEmpty()
+        .EmailAddress()
+        .MaximumLength(254);
+    }
+  }
+
+  public class ResetPasswordRequest
+  {
+    public required string Token { get; set; }
+    public required string NewPassword { get; set; }
+  }
+
+  public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+  {
+    public ResetPasswordRequestValidator()
+    {
+      RuleFor(x => x.Token)
+        .NotEmpty()
+        .MaximumLength(256);
+
+      RuleFor(x => x.NewPassword)
+        .NotEmpty()
+        .MinimumLength(12)
+        .MaximumLength(128);
+    }
+  }
+
   public class AuthResponse
   {
     public required string AccessToken { get; set; }

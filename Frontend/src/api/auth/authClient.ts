@@ -43,6 +43,7 @@ export class AuthApiError extends Error {
 const FIELD_NAMES: Partial<Record<string, AuthField>> = {
   email: 'email',
   password: 'password',
+  newpassword: 'newPassword',
   displayname: 'displayName',
   confirmpassword: 'confirmPassword',
   invitecode: 'inviteCode',
@@ -277,6 +278,31 @@ class AuthClient {
       request,
       null,
     );
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await postAuth('forgot-password', { email });
+
+    if (!response.ok) {
+      throw await parseAuthError(
+        response,
+        'Unable to send the reset email. Try again.',
+      );
+    }
+  }
+
+  async resetPassword(request: {
+    token: string;
+    newPassword: string;
+  }): Promise<void> {
+    const response = await postAuth('reset-password', request);
+
+    if (!response.ok) {
+      throw await parseAuthError(
+        response,
+        'Unable to reset your password. Try again.',
+      );
+    }
   }
 }
 

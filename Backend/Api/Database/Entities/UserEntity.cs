@@ -19,5 +19,6 @@ namespace Api.Database.Entities
     public ICollection<BrewEntity> Brews { get; set; } = [];
     public ICollection<UserEquipmentEntity> UserEquipment { get; set; } = [];
     public ICollection<RefreshTokenEntity> RefreshTokens { get; set; } = [];
+    public ICollection<PasswordResetTokenEntity> PasswordResetTokens { get; set; } = [];
   }
 }
