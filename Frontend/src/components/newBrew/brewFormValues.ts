@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Brew, BrewCreateRequest } from '@/api/brews/brewRequestSchemas';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { BrewMethodResponseSchema } from '@/api/brewMethods/brewMethodRequestSchemas';
 
 export const BrewFormSchema = z.object({
@@ -16,10 +17,36 @@ export const BrewFormSchema = z.object({
 
 export type BrewFormValues = z.infer<typeof BrewFormSchema>;
 
-export function getDefaultValues(method: BrewMethod): BrewFormValues {
+export const ROAST_STYLE_TO_BREW_METHOD: Record<string, string | undefined> = {
+  Espresso: 'Espresso',
+  Filter: 'V60',
+  Omni: 'V60',
+};
+
+export function getBrewMethodForRoastStyle(
+  roastStyle: string,
+  brewMethods: Array<BrewMethod>,
+): BrewMethod {
+  const mappedName = ROAST_STYLE_TO_BREW_METHOD[roastStyle];
+  if (mappedName !== undefined) {
+    const match = brewMethods.find((method) => method.name === mappedName);
+    if (match !== undefined) {
+      return match;
+    }
+  }
+
+  return (
+    brewMethods.find((method) => method.name === 'Espresso') ?? brewMethods[0]
+  );
+}
+
+export function getDefaultValues(
+  method: BrewMethod,
+  coffeeBagId = 0,
+): BrewFormValues {
   return {
     brewMethod: method,
-    coffeeBagId: 0,
+    coffeeBagId,
     brewTasteScore: 0,
     coffeeDose: method.dose.default,
     grindSize: method.grindSize.default,
@@ -27,6 +54,43 @@ export function getDefaultValues(method: BrewMethod): BrewFormValues {
     brewWeight: method.brewWeight.default,
     notes: '',
   };
+}
+
+export function getValuesFromBrew(
+  brew: Brew,
+  brewMethods: Array<BrewMethod>,
+): BrewFormValues | null {
+  const method = brewMethods.find((m) => m.id === brew.brewMethodId);
+  if (method === undefined) {
+    return null;
+  }
+
+  return {
+    brewMethod: method,
+    coffeeBagId: brew.coffeeBagId,
+    brewTasteScore: 0,
+    coffeeDose: brew.coffeeDose,
+    grindSize: brew.grindSize,
+    brewTime: brew.brewTime,
+    brewWeight: brew.brewWeight,
+    notes: '',
+  };
+}
+
+export function resolveBrewFormValues(
+  bag: CoffeeBag,
+  brewMethods: Array<BrewMethod>,
+  previousBrew?: Brew,
+): BrewFormValues {
+  if (previousBrew !== undefined) {
+    const values = getValuesFromBrew(previousBrew, brewMethods);
+    if (values !== null) {
+      return { ...values, coffeeBagId: bag.id };
+    }
+  }
+
+  const method = getBrewMethodForRoastStyle(bag.roastStyle, brewMethods);
+  return getDefaultValues(method, bag.id);
 }
 
 export function getEditValues(brew: Brew, method: BrewMethod): BrewFormValues {

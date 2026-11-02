@@ -5,6 +5,7 @@ import { BrewForm } from '../BrewForm';
 import { getDefaultValues } from '../brewFormValues';
 import type { BrewFormValues } from '../brewFormValues';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { Brew } from '@/api/brews/brewRequestSchemas';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 
 const method: BrewMethod = {
@@ -22,6 +23,23 @@ const bag: CoffeeBag = {
   roaster: 'Tim Wendelboe',
   origin: 'Kenya',
   roastStyle: 'Light',
+};
+
+const v60: BrewMethod = {
+  id: 2,
+  name: 'V60',
+  dose: { min: 10, max: 60, default: 16 },
+  grindSize: { min: 10, max: 15, default: 12.5 },
+  brewTime: { min: 10, max: 420, default: 150 },
+  brewWeight: { min: 1, max: 400, default: 240 },
+};
+
+const filterBag: CoffeeBag = {
+  id: 7,
+  userId: 1,
+  roaster: 'Tim Wendelboe',
+  origin: 'Kenya',
+  roastStyle: 'Filter',
 };
 
 beforeAll(() => {
@@ -45,6 +63,8 @@ beforeAll(() => {
 
 interface RenderOptions {
   coffeeBags?: Array<CoffeeBag>;
+  brewMethods?: Array<BrewMethod>;
+  previousBrews?: Map<number, Brew>;
   onCreateBag?: () => void;
   onDraftChange?: (values: BrewFormValues) => void;
   onCancel?: () => void;
@@ -52,6 +72,8 @@ interface RenderOptions {
 
 function renderForm({
   coffeeBags = [],
+  brewMethods = [method],
+  previousBrews,
   onCreateBag,
   onDraftChange,
   onCancel = vi.fn(),
@@ -59,8 +81,9 @@ function renderForm({
   return render(
     <BrewForm
       initialValues={getDefaultValues(method)}
-      brewMethods={[method]}
+      brewMethods={brewMethods}
       coffeeBags={coffeeBags}
+      previousBrews={previousBrews}
       submitLabel="Save Brew"
       cancelLabel="Hide"
       isLoading={false}
@@ -144,6 +167,77 @@ describe('BrewForm coffee bag select', () => {
 
     expect(onDraftChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ notes: 'Tasting good' }),
+    );
+  });
+});
+
+describe('BrewForm bag-driven defaults', () => {
+  it('prefills method defaults based on the bag roast style', () => {
+    const onDraftChange = vi.fn();
+
+    renderForm({
+      brewMethods: [method, v60],
+      coffeeBags: [filterBag],
+      onDraftChange,
+    });
+    openBagSelect();
+    fireEvent.click(
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+    );
+
+    expect(onDraftChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        coffeeBagId: 7,
+        brewMethod: v60,
+        coffeeDose: 16,
+        grindSize: 12.5,
+        brewTime: 150,
+        brewWeight: 240,
+        brewTasteScore: 0,
+        notes: '',
+      }),
+    );
+  });
+
+  it('prefills from the previous brew but resets score and notes', () => {
+    const onDraftChange = vi.fn();
+    const previousBrew: Brew = {
+      id: 10,
+      coffeeBagId: 7,
+      coffeeBag: filterBag,
+      brewMethodId: 2,
+      brewMethodName: 'V60',
+      coffeeDose: 20,
+      grindSize: 13,
+      brewTime: 200,
+      brewWeight: 300,
+      brewTasteScore: 4,
+      notes: 'Tasty cup',
+      brewedOn: '2026-01-01T00:00:00.000Z',
+    };
+
+    renderForm({
+      brewMethods: [method, v60],
+      coffeeBags: [filterBag],
+      previousBrews: new Map([[7, previousBrew]]),
+      onDraftChange,
+    });
+    openBagSelect();
+    fireEvent.click(
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+    );
+
+    expect(onDraftChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        coffeeBagId: 7,
+        brewMethod: v60,
+        coffeeDose: 20,
+        grindSize: 13,
+        brewTime: 200,
+        brewWeight: 300,
+        brewTasteScore: 0,
+        notes: '',
+      }),
     );
   });
 });

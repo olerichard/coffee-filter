@@ -5,6 +5,7 @@ import { getDefaultValues, toBrewRequest } from './brewFormValues';
 import { clearBrewDraft, readBrewDraft, writeBrewDraft } from './brewDraft';
 import { useCreateBrew } from './useCreateBrew';
 import type { BrewFormValues } from './brewFormValues';
+import type { Brew } from '@/api/brews/brewRequestSchemas';
 import { coffeeBagKeys } from '@/api/coffeeBags/coffeeBagKeys';
 import { apiClients } from '@/api/apiClients';
 import { useAuth } from '@/components/context/authentication/AuthenticationContext';
@@ -54,7 +55,28 @@ export function CreateBrew({ onCancel, onCreateBag }: CreateBrewProps) {
     queryFn: () => apiClients.coffeeBag.getCoffeeBags(),
   });
 
-  if (brewMethodsQuery.isLoading || coffeeBagsQuery.isLoading) {
+  const brewsQuery = useQuery({
+    queryKey: ['brews'],
+    queryFn: () => apiClients.brew.getBrews(),
+  });
+
+  // Brews are returned newest-first, so the first entry per bag is the most
+  // recent brew to prefill from.
+  const previousBrews = useMemo(() => {
+    const map = new Map<number, Brew>();
+    for (const brew of brewsQuery.data ?? []) {
+      if (!map.has(brew.coffeeBagId)) {
+        map.set(brew.coffeeBagId, brew);
+      }
+    }
+    return map;
+  }, [brewsQuery.data]);
+
+  if (
+    brewMethodsQuery.isLoading ||
+    coffeeBagsQuery.isLoading ||
+    brewsQuery.isLoading
+  ) {
     return (
       <div className="flex justify-center py-8">
         <span className="text-muted-foreground">Loading...</span>
@@ -111,6 +133,7 @@ export function CreateBrew({ onCancel, onCreateBag }: CreateBrewProps) {
       initialValues={initialValues}
       brewMethods={brewMethods}
       coffeeBags={coffeeBags}
+      previousBrews={previousBrews}
       submitLabel="Save Brew"
       cancelLabel="Hide"
       isLoading={isLoading}

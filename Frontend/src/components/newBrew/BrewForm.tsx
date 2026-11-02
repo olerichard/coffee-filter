@@ -1,9 +1,14 @@
 import { useForm } from '@tanstack/react-form';
 import { useEffect, useRef, useState } from 'react';
-import { BrewFormSchema, getDefaultValues } from './brewFormValues';
+import {
+  BrewFormSchema,
+  getDefaultValues,
+  resolveBrewFormValues,
+} from './brewFormValues';
 import type { Ref } from 'react';
 import type { BrewFormValues } from './brewFormValues';
 import type { BrewMethod } from '@/api/brewMethods/brewMethodRequestSchemas';
+import type { Brew } from '@/api/brews/brewRequestSchemas';
 import type { CoffeeBag } from '@/api/coffeeBags/coffeeRequestSchemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +37,7 @@ interface BrewFormProps {
   initialValues: BrewFormValues;
   brewMethods: Array<BrewMethod>;
   coffeeBags: Array<CoffeeBag>;
+  previousBrews?: Map<number, Brew>;
   submitLabel: string;
   cancelLabel: string;
   isLoading: boolean;
@@ -50,6 +56,7 @@ export function BrewForm({
   initialValues,
   brewMethods,
   coffeeBags,
+  previousBrews = new Map(),
   submitLabel,
   cancelLabel,
   isLoading,
@@ -96,8 +103,15 @@ export function BrewForm({
     };
   }, []);
 
+  const applyValues = (values: BrewFormValues) => {
+    // `form.reset` updates the store directly without running the form-level
+    // onChange listener, so persist the draft ourselves.
+    form.reset(values);
+    onDraftChange?.(values);
+  };
+
   const selectBrewMethod = (method: BrewMethod) => {
-    form.reset(getDefaultValues(method));
+    applyValues(getDefaultValues(method, form.state.values.coffeeBagId));
   };
 
   const handleDeleteClick = () => {
@@ -133,7 +147,89 @@ export function BrewForm({
       }}
       className="flex flex-col gap-4"
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form.Field name="coffeeBagId">
+          {(field) => {
+            const hasBags = coffeeBags.length > 0;
+            const isBagAvailable = coffeeBags.some(
+              (bag) => bag.id === field.state.value,
+            );
+            const error =
+              field.state.meta.errors.length > 0 && field.state.meta.isTouched
+                ? field.state.meta.errors[0]?.message
+                : undefined;
+
+            return (
+              <Field>
+                <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
+                <Select
+                  value={isBagAvailable ? field.state.value.toString() : ''}
+                  onValueChange={(value) => {
+                    if (value === CREATE_BAG_OPTION) {
+                      onCreateBag?.();
+                      return;
+                    }
+
+                    const bagId = Number(value);
+                    const bag = coffeeBags.find((b) => b.id === bagId);
+                    if (bag !== undefined) {
+                      applyValues(
+                        resolveBrewFormValues(
+                          bag,
+                          brewMethods,
+                          previousBrews.get(bagId),
+                        ),
+                      );
+                    } else {
+                      field.handleChange(bagId);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    aria-invalid={error !== undefined}
+                    id="coffeeBagId"
+                  >
+                    <SelectValue
+                      placeholder={
+                        hasBags ? 'Select a coffee bag' : 'No coffee bags yet'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hasBags ? (
+                      coffeeBags.map((bag) => (
+                        <SelectItem key={bag.id} value={bag.id.toString()}>
+                          {bag.roaster} - {bag.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectGroup>
+                        <SelectLabel>
+                          No coffee bags with coffee left
+                        </SelectLabel>
+                        <SelectItem
+                          value={CREATE_BAG_OPTION}
+                          disabled={onCreateBag === undefined}
+                        >
+                          Add a coffee bag…
+                        </SelectItem>
+                      </SelectGroup>
+                    )}
+                  </SelectContent>
+                </Select>
+                {error !== undefined ? (
+                  <FieldDescription>{error}</FieldDescription>
+                ) : null}
+                {!hasBags ? (
+                  <FieldDescription>
+                    You need a coffee bag before you can save a brew.
+                  </FieldDescription>
+                ) : null}
+              </Field>
+            );
+          }}
+        </form.Field>
+
         <form.Field name="brewMethod">
           {(field) => (
             <Field>
@@ -172,76 +268,6 @@ export function BrewForm({
                 )}
             </Field>
           )}
-        </form.Field>
-
-        <form.Field name="coffeeBagId">
-          {(field) => {
-            const hasBags = coffeeBags.length > 0;
-            const isBagAvailable = coffeeBags.some(
-              (bag) => bag.id === field.state.value,
-            );
-            const error =
-              field.state.meta.errors.length > 0 && field.state.meta.isTouched
-                ? field.state.meta.errors[0]?.message
-                : undefined;
-
-            return (
-              <Field>
-                <FieldLabel htmlFor="coffeeBagId">Coffee Bag *</FieldLabel>
-                <Select
-                  value={isBagAvailable ? field.state.value.toString() : ''}
-                  onValueChange={(value) => {
-                    if (value === CREATE_BAG_OPTION) {
-                      onCreateBag?.();
-                      return;
-                    }
-
-                    field.handleChange(Number(value));
-                  }}
-                >
-                  <SelectTrigger
-                    aria-invalid={error !== undefined}
-                    id="coffeeBagId"
-                  >
-                    <SelectValue
-                      placeholder={
-                        hasBags ? 'Select a coffee bag' : 'No coffee bags yet'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hasBags ? (
-                      coffeeBags.map((bag) => (
-                        <SelectItem key={bag.id} value={bag.id.toString()}>
-                          {bag.roaster} - {bag.origin}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectGroup>
-                        <SelectLabel>
-                          No coffee bags with coffee left
-                        </SelectLabel>
-                        <SelectItem
-                          value={CREATE_BAG_OPTION}
-                          disabled={onCreateBag === undefined}
-                        >
-                          Add a coffee bag…
-                        </SelectItem>
-                      </SelectGroup>
-                    )}
-                  </SelectContent>
-                </Select>
-                {error !== undefined ? (
-                  <FieldDescription>{error}</FieldDescription>
-                ) : null}
-                {!hasBags ? (
-                  <FieldDescription>
-                    You need a coffee bag before you can save a brew.
-                  </FieldDescription>
-                ) : null}
-              </Field>
-            );
-          }}
         </form.Field>
       </div>
 
