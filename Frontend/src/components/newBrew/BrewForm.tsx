@@ -199,7 +199,7 @@ export function BrewForm({
                     {hasBags ? (
                       coffeeBags.map((bag) => (
                         <SelectItem key={bag.id} value={bag.id.toString()}>
-                          {bag.roaster} - {bag.origin}
+                          {bag.roaster} - {bag.name}
                         </SelectItem>
                       ))
                     ) : (

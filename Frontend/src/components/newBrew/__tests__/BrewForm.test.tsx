@@ -21,6 +21,7 @@ const bag: CoffeeBag = {
   id: 7,
   userId: 1,
   roaster: 'Tim Wendelboe',
+  name: 'Kenya Nyeri',
   origin: 'Kenya',
   roastStyle: 'Light',
 };
@@ -38,6 +39,7 @@ const filterBag: CoffeeBag = {
   id: 7,
   userId: 1,
   roaster: 'Tim Wendelboe',
+  name: 'Kenya Nyeri',
   origin: 'Kenya',
   roastStyle: 'Filter',
 };
@@ -137,12 +139,12 @@ describe('BrewForm coffee bag select', () => {
     ).toBeNull();
 
     fireEvent.click(
-      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya Nyeri' }),
     );
 
     expect(
       screen.getByRole('combobox', { name: /Coffee Bag/ }).textContent,
-    ).toContain('Tim Wendelboe - Kenya');
+    ).toContain('Tim Wendelboe - Kenya Nyeri');
   });
 
   it('does not show the create option when no handler is provided', () => {
@@ -182,7 +184,7 @@ describe('BrewForm bag-driven defaults', () => {
     });
     openBagSelect();
     fireEvent.click(
-      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya Nyeri' }),
     );
 
     expect(onDraftChange).toHaveBeenLastCalledWith(
@@ -224,7 +226,7 @@ describe('BrewForm bag-driven defaults', () => {
     });
     openBagSelect();
     fireEvent.click(
-      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya' }),
+      screen.getByRole('option', { name: 'Tim Wendelboe - Kenya Nyeri' }),
     );
 
     expect(onDraftChange).toHaveBeenLastCalledWith(
