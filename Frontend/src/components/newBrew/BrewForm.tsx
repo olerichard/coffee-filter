@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { NumberCarousel } from '@/components/brews/NumberCarousel';
+import { NumberCarousel } from '@/components/ui/number-carousel/NumberCarousel';
 import { StarSelector } from '@/components/ui/StarSelector';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
@@ -199,7 +199,7 @@ export function BrewForm({
                     {hasBags ? (
                       coffeeBags.map((bag) => (
                         <SelectItem key={bag.id} value={bag.id.toString()}>
-                          {bag.roaster} - {bag.name}
+                          {bag.roaster} - {bag.origin}
                         </SelectItem>
                       ))
                     ) : (
